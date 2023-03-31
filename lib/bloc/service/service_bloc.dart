@@ -9,5 +9,6 @@ class ServiceBloc extends Bloc<UpdateServiceList ,List<BluetoothService>>
       var newList = event.services;
       emit(newList);
     });
+
   }
 }

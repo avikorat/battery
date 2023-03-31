@@ -9,3 +9,9 @@ class UpdateServiceList extends ServiceEvent {
 
   UpdateServiceList(this.services);
 }
+
+class ServiceId extends ServiceEvent{
+   final List<BluetoothService> services;
+
+  ServiceId(this.services);
+}

@@ -15,14 +15,50 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  final _pageNo = [
+    const MainScreen(),
+    const BluetoothOffScreen(),
+    const Settings()
+  ];
+
+  final _bottomBarItems = const [
+    BottomNavigationBarItem(icon: Icon(Icons.home), label: "Home"),
+    BottomNavigationBarItem(icon: Icon(Icons.bluetooth), label: "Battery"),
+    BottomNavigationBarItem(icon: Icon(Icons.settings), label: "Settings")
+  ];
+
+  // ************** BOTTOM NAV BAR WIDGET ****************
+
+  Widget _bottomBar(int state) {
+    return Container(
+      height: MediaQuery.of(context).size.height / 13,
+      decoration: const BoxDecoration(
+        borderRadius: BorderRadius.only(
+            topRight: Radius.circular(30), topLeft: Radius.circular(30)),
+        boxShadow: [
+          BoxShadow(color: Colors.black38, spreadRadius: 0, blurRadius: 10),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(30.0),
+          topRight: Radius.circular(30.0),
+        ),
+        child: BottomNavigationBar(
+          items: _bottomBarItems,
+          currentIndex: state,
+          elevation: 10,
+          type: BottomNavigationBarType.fixed,
+          onTap: (int index) {
+            context.read<TabServiceBloc>().add(UpdateTabList(index));
+          },
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final _pageNo = [
-      const MainScreen(),
-      const BluetoothOffScreen(),
-      const Settings()
-    ];
-
     return StreamBuilder<BluetoothState>(
         stream: FlutterBluePlus.instance.state,
         initialData: BluetoothState.unknown,
@@ -37,40 +73,7 @@ class _HomeScreenState extends State<HomeScreen> {
               builder: (context, state) {
             return Scaffold(
               body: _pageNo[state],
-              bottomNavigationBar: Container(
-                height: MediaQuery.of(context).size.height / 13,
-                decoration: const BoxDecoration(
-                  borderRadius: BorderRadius.only(
-                      topRight: Radius.circular(30),
-                      topLeft: Radius.circular(30)),
-                  boxShadow: [
-                    BoxShadow(
-                        color: Colors.black38, spreadRadius: 0, blurRadius: 10),
-                  ],
-                ),
-                child: ClipRRect(
-                  borderRadius: const BorderRadius.only(
-                    topLeft: Radius.circular(30.0),
-                    topRight: Radius.circular(30.0),
-                  ),
-                  child: BottomNavigationBar(
-                    items: const [
-                      BottomNavigationBarItem(
-                          icon: Icon(Icons.home), label: "Home"),
-                      BottomNavigationBarItem(
-                          icon: Icon(Icons.bluetooth), label: "Battery"),
-                      BottomNavigationBarItem(
-                          icon: Icon(Icons.settings), label: "Settings")
-                    ],
-                    currentIndex: state,
-                    elevation: 10,
-                    type: BottomNavigationBarType.fixed,
-                    onTap: (int index) {
-                      context.read<TabServiceBloc>().add(UpdateTabList(index));
-                    },
-                  ),
-                ),
-              ),
+              bottomNavigationBar: _bottomBar(state),
             );
           });
         });
