@@ -38,6 +38,7 @@ dependencies:
   bloc: ^8.1.1
   equatable: ^2.0.5
   flutter_blue_plus: ^1.4.0
+  intl: ^0.18.0
 
 dev_dependencies:
   flutter_test:

@@ -18,6 +18,7 @@ class BluetoothOffScreen extends StatefulWidget {
 }
 
 class _BluetoothOffScreenState extends State<BluetoothOffScreen> {
+
 // **************  BLUETOOTH OFF WIDGET ****************
   _bluetoothOffWidget() {
     return Center(
@@ -27,17 +28,17 @@ class _BluetoothOffScreenState extends State<BluetoothOffScreen> {
           const Icon(
             Icons.bluetooth_disabled,
             size: 200.0,
-            color: Colors.white54,
+            color: Colors.blue,
           ),
           Text(
             'Bluetooth Adapter is ${widget.state != null ? widget.state.toString().substring(15) : 'not available'}.',
             style: Theme.of(context)
                 .primaryTextTheme
                 .subtitle2
-                ?.copyWith(color: Colors.white),
+                ?.copyWith(color: Colors.black),
           ),
           ElevatedButton(
-            child: const Text('TURN ON'),
+            child: const Text('TURN ON', style: TextStyle(color: Colors.white),),
             onPressed: Platform.isAndroid
                 ? () {
                     FlutterBluePlus.instance.turnOn();
@@ -83,12 +84,15 @@ class _BluetoothOffScreenState extends State<BluetoothOffScreen> {
                                 FlutterBluePlus.instance.stopScan();
                                 List<BluetoothService> services =
                                     await r.device.discoverServices();
-                                context
-                                    .read<ServiceBloc>()
-                                    .add(UpdateServiceList(services));
-                                context
-                                    .read<TabServiceBloc>()
-                                    .add(UpdateTabList(0));
+
+                                if (mounted) {
+                                  context
+                                      .read<ServiceBloc>()
+                                      .add(UpdateServiceList(services));
+                                  context
+                                      .read<TabServiceBloc>()
+                                      .add(UpdateTabList(0));
+                                }
                               },
                             )
                           : Container(),
@@ -144,9 +148,10 @@ class _BluetoothOffScreenState extends State<BluetoothOffScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.lightBlue,
+      
       appBar: AppBar(
-        title: Text('Bluetooth'),
+        title: Text('Bluetooth', style: TextStyle(color: Colors.white)),
+        centerTitle: true,
       ),
       body: StreamBuilder<BluetoothState>(
           stream: FlutterBluePlus.instance.state,

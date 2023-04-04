@@ -1,7 +1,11 @@
+import 'dart:convert';
+import 'dart:math';
+
 import 'package:battery/bloc/parse_data/parse_data_bloc.dart';
 import 'package:battery/bloc/parse_data/parse_data_event.dart';
 import 'package:battery/bloc/service/service_bloc.dart';
 import 'package:battery/models/data_model.dart';
+import 'package:battery/screen/bluetooth_off_screen.dart';
 import 'package:battery/utils/constants.dart';
 import 'package:battery/utils/utils.dart';
 import 'package:flutter/material.dart';
@@ -45,7 +49,9 @@ class _MainScreenState extends State<MainScreen> {
         values[index] = "0";
       }
 // 1 for chemistry of battery
-      if (values[1] == "1") {
+      if (values.length < 3) {
+        print("issue");
+      } else if (values[1] == "1") {
         int _chem = int.parse(values[2]);
         if (_chem == 0) {
           chemistryValue = "AGM";
@@ -64,17 +70,25 @@ class _MainScreenState extends State<MainScreen> {
         int _chargeTimeFlag = int.parse(values[2]);
         int _hours = (_chargeTimeFlag / 60).toInt();
         int _mins = (_chargeTimeFlag % 60).toInt();
-        chargeTime = "${_hours} : ${_mins}";
+        chargeTime =
+            '${_hours.toString().padLeft(2, '0')}:${_mins.toString().padLeft(2, '0')}';
+
 // 3 for battery status
       } else if (values[1] == "3") {
-        int _batteryVal = int.parse(values[2]);
-        if (_batteryVal == 0) {
-          batteryStatus = "No Battery";
-        } else if (_batteryVal > 0 && _batteryVal < 7) {
-          batteryStatus = "Charging";
-        } else if (_batteryVal == 7) {
-          batteryStatus = "Charged";
+        if (values[2] == "") {
+          print("status issue");
+        } else {
+          int _batteryVal = int.parse(values[2]);
+          if (_batteryVal == 0) {
+            batteryStatus = "No Battery";
+          } else if (_batteryVal > 0 && _batteryVal < 7) {
+            batteryStatus = "Charging";
+          } else if (_batteryVal == 7) {
+            batteryStatus = "Charged";
+          }
+          
         }
+
 // 8 for current
       } else if (values[1] == "8") {
         int _currentFlag = int.parse(values[2]);
@@ -98,44 +112,33 @@ class _MainScreenState extends State<MainScreen> {
       chargeTime ?? "00:00",
       current ?? "0.0 Amp"
     ];
-    context.read<ParseDataBloc>().add(ParsingList(d));
+
+    if (mounted) {
+      context.read<ParseDataBloc>().add(ParsingList(d));
+    }
   }
 
-  _decodeData(List<int> notificationData) async {
+  _decodeData(List<int> notificationData) {
     _packates.add(String.fromCharCodes(notificationData));
-
     _parsedPackates = _packates.join();
+
     _parsedPackates.split('\n').forEach((element) {
-      List<String> parts = element.split(':');
-      if (parts.length == 2 && parts[1].length > 2) {
-        String _tempData = _finalParsedData.last;
-        if (_tempData.contains("L:7")) {
-          _finalParsedData[_finalParsedData.length - 1] =
-              (_tempData +":"+ parts[1]);
-        }
+      if (element.startsWith('L:')) {
+        _finalParsedData.add(element);
+        _parsedPackates = "";
+        _packates = [];
+      } else if (_finalParsedData.isNotEmpty) {
+        _finalParsedData.last += element;
+        _parsedPackates = "";
+        _packates = [];
       }
-      if (parts.length == 3 ||
-          parts.length == 2 &&
-              int.parse(parts[1]) >= 1 &&
-              int.parse(parts[1]) <= 50) {
-        if (element.startsWith("L:")) {
-          _parsedPackates = '';
-          _packates.clear();
-        
-          _finalParsedData.add(element);
-          if (_finalParsedData.length != 0) {
-            List<String> finalParsedDataCopy =
-                List<String>.from(_finalParsedData);
-            for (var element in finalParsedDataCopy) {
-              if (element.contains("L:50") || element.contains("L:31")) {
-                _packates.clear();
-                _parsedPackates = '';
-                _convertDataToModelClass(_finalParsedData);
-                _finalParsedData.clear();
-              }
-            }
-          }
-        }
+
+      if (_finalParsedData.isNotEmpty &&
+          (_finalParsedData.last.contains('L:50') ||
+              _finalParsedData.last.contains('L:31'))) {
+        List<String> temp = _finalParsedData;
+        _convertDataToModelClass(_finalParsedData);
+        _finalParsedData = [];
       }
     });
   }
@@ -158,6 +161,7 @@ class _MainScreenState extends State<MainScreen> {
 
       _characteristic!.setNotifyValue(true);
       _characteristic!.value.listen((notificationData) {
+        //   print(String.fromCharCodes(notificationData));
         _decodeData(notificationData);
       });
     }
@@ -169,8 +173,9 @@ class _MainScreenState extends State<MainScreen> {
       body: BlocBuilder<ServiceBloc, List<BluetoothService>>(
           builder: (context, state) {
         _gettingData(state);
-        return BlocBuilder<ParseDataBloc, List<String>>(
+        return BlocBuilder<ParseDataBloc, List<dynamic>>(
           builder: (context, data) {
+            print(data);
             return GridView.builder(
               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: 2,
@@ -198,7 +203,7 @@ class _MainScreenState extends State<MainScreen> {
                             children: [
                               Text(
                                 _names[index],
-                                style: TextStyle(
+                                style: const TextStyle(
                                     color: Colors.white,
                                     fontWeight: FontWeight.bold,
                                     fontSize: 16),
@@ -206,7 +211,7 @@ class _MainScreenState extends State<MainScreen> {
                               SizedBox(height: 16),
                               Text(
                                 data[index],
-                                style: TextStyle(
+                                style: const TextStyle(
                                     color: Colors.white,
                                     fontWeight: FontWeight.bold,
                                     fontSize: 16),

@@ -1,7 +1,7 @@
 abstract class ParseDataEvent {}
 
 class ParsingList extends ParseDataEvent {
-  final List<String> incomingData;
+  final List<dynamic> incomingData;
 
   ParsingList(this.incomingData);
 }
