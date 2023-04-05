@@ -1,11 +1,6 @@
-import 'dart:convert';
-import 'dart:math';
-
 import 'package:battery/bloc/parse_data/parse_data_bloc.dart';
 import 'package:battery/bloc/parse_data/parse_data_event.dart';
 import 'package:battery/bloc/service/service_bloc.dart';
-import 'package:battery/models/data_model.dart';
-import 'package:battery/screen/bluetooth_off_screen.dart';
 import 'package:battery/utils/constants.dart';
 import 'package:battery/utils/utils.dart';
 import 'package:flutter/material.dart';
@@ -18,6 +13,8 @@ class MainScreen extends StatefulWidget {
   @override
   State<MainScreen> createState() => _MainScreenState();
 }
+
+BluetoothCharacteristic? CHARACTERISTICS;
 
 class _MainScreenState extends State<MainScreen> {
   List<String> _packates = [];
@@ -33,6 +30,8 @@ class _MainScreenState extends State<MainScreen> {
     "Time",
     "Current"
   ];
+
+// Parsing data according to the need of the UI and add the stream of data into bloc
 
   _convertDataToModelClass(List<String> data) {
     String? chemistryValue;
@@ -75,18 +74,24 @@ class _MainScreenState extends State<MainScreen> {
 
 // 3 for battery status
       } else if (values[1] == "3") {
-        if (values[2] == "") {
+        if (values[2].isEmpty) {
           print("status issue");
         } else {
-          int _batteryVal = int.parse(values[2]);
-          if (_batteryVal == 0) {
-            batteryStatus = "No Battery";
-          } else if (_batteryVal > 0 && _batteryVal < 7) {
-            batteryStatus = "Charging";
-          } else if (_batteryVal == 7) {
-            batteryStatus = "Charged";
+          if (values[2].contains('\n')) {
+            values[2] = values[2].replaceAll('\n', "");
           }
-          
+          try {
+            int _batteryVal = int.parse(values[2]);
+            if (_batteryVal == 0) {
+              batteryStatus = "No Battery";
+            } else if (_batteryVal > 0 && _batteryVal < 7) {
+              batteryStatus = "Charging";
+            } else if (_batteryVal == 7) {
+              batteryStatus = "Charged";
+            }
+          } catch (e) {
+            print(e);
+          }
         }
 
 // 8 for current
@@ -96,15 +101,18 @@ class _MainScreenState extends State<MainScreen> {
 
 // 7 for voltage
       } else if (values[1] == "7") {
-        int _voltageFlag = int.parse(values[2]);
-        if (_voltageFlag == 0) {
-          voltage = "0.00";
-        } else {
-          voltage = (_voltageFlag / 100).toString();
+        try {
+          int _voltageFlag = int.parse(values[2]);
+          if (_voltageFlag == 0) {
+            voltage = "0.00";
+          } else {
+            voltage = (_voltageFlag / 100).toString();
+          }
+        } catch (e) {
+          print(e);
         }
       }
     }
-
     List<String> d = [
       chemistryValue ?? "",
       batteryStatus ?? "No Battery",
@@ -117,6 +125,8 @@ class _MainScreenState extends State<MainScreen> {
       context.read<ParseDataBloc>().add(ParsingList(d));
     }
   }
+
+  // incoming data parsing function
 
   _decodeData(List<int> notificationData) {
     _packates.add(String.fromCharCodes(notificationData));
@@ -131,18 +141,23 @@ class _MainScreenState extends State<MainScreen> {
         _finalParsedData.last += element;
         _parsedPackates = "";
         _packates = [];
+      } else if (element.startsWith("C:")) {
+        print(element);
       }
 
       if (_finalParsedData.isNotEmpty &&
           (_finalParsedData.last.contains('L:50') ||
               _finalParsedData.last.contains('L:31'))) {
         List<String> temp = _finalParsedData;
-        _convertDataToModelClass(_finalParsedData);
+        if (_finalParsedData.length > 5) {
+          _convertDataToModelClass(_finalParsedData);
+        }
         _finalParsedData = [];
       }
     });
   }
 
+// Fetching data from the bluetooth and passing to decode function
   _gettingData(List<BluetoothService> state) {
     if (state.isNotEmpty) {
       for (var element in state) {
@@ -155,13 +170,14 @@ class _MainScreenState extends State<MainScreen> {
         (element) {
           if (convertUUID(element.uuid.toString()) == CHARACTERISTIC) {
             _characteristic = element;
+            CHARACTERISTICS = element;
           }
         },
       );
 
       _characteristic!.setNotifyValue(true);
       _characteristic!.value.listen((notificationData) {
-        //   print(String.fromCharCodes(notificationData));
+        //  print(String.fromCharCodes(notificationData));
         _decodeData(notificationData);
       });
     }
@@ -170,12 +186,12 @@ class _MainScreenState extends State<MainScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Color.fromARGB(96, 228, 227, 227),
       body: BlocBuilder<ServiceBloc, List<BluetoothService>>(
           builder: (context, state) {
         _gettingData(state);
         return BlocBuilder<ParseDataBloc, List<dynamic>>(
           builder: (context, data) {
-            print(data);
             return GridView.builder(
               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: 2,
@@ -184,48 +200,51 @@ class _MainScreenState extends State<MainScreen> {
               itemBuilder: (BuildContext context, int index) {
                 return Padding(
                   padding: const EdgeInsets.all(16.0),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(25),
-                    child: Material(
-                      color: Colors.blueAccent,
-                      shadowColor: Colors.red,
-                      elevation: 15,
-                      child: Container(
-                          decoration: const BoxDecoration(
-                            gradient: LinearGradient(colors: [
-                              Colors.blue,
-                              Color.fromARGB(255, 52, 50, 184)
-                            ]),
-                          ),
-                          child: Center(
-                              child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text(
-                                _names[index],
-                                style: const TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 16),
-                              ),
-                              SizedBox(height: 16),
-                              Text(
-                                data[index],
-                                style: const TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 16),
-                              ),
-                            ],
-                          ))),
-                    ),
-                  ),
+                  child: _gridTiles(data, index),
                 );
               },
             );
           },
         );
       }),
+    );
+  }
+
+  // Grid tile widget
+  Widget _gridTiles(List<dynamic> data, int index) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(25),
+      child: Material(
+        color: Colors.blueAccent,
+        shadowColor: Colors.red,
+        elevation: 15,
+        child: Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                  colors: [Colors.blue, Color.fromARGB(255, 52, 50, 184)]),
+            ),
+            child: Center(
+                child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  _names[index],
+                  style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16),
+                ),
+                SizedBox(height: 16),
+                Text(
+                  data[index],
+                  style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16),
+                ),
+              ],
+            ))),
+      ),
     );
   }
 }

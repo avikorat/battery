@@ -8,7 +8,7 @@ import 'package:flutter/material.dart';
 var customRoutes = <String, WidgetBuilder>{
   '/': (context) => HomeScreen(),
   '/bluetooth': (context) => BluetoothOffScreen(),
-  '/settings':(context) => Settings(),
-  '/mainScreen':(context) => MainScreen(),
-  '/setup':(context) => Setup(),
+  '/settings': (context) => Settings(),
+  '/mainScreen': (context) => MainScreen(),
+  '/setup': (context) => Setup(),
 };
