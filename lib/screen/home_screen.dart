@@ -68,7 +68,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 snapshot.connectionState == BluetoothState.on ? 0 : 1));
             if (snapshot.connectionState == BluetoothState.on) {
               FlutterBluePlus.instance.scan(
-                  scanMode: ScanMode.lowPower, timeout: Duration(seconds: 10));
+                  scanMode: ScanMode.lowPower, timeout: const Duration(seconds: 10));
             }
           } else {
             context.read<TabServiceBloc>().add(UpdateTabList(0));

@@ -20,6 +20,11 @@ class Settings extends StatefulWidget {
 
 class _SettingsState extends State<Settings> {
   @override
+  void initState() {
+    super.initState();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
@@ -42,13 +47,21 @@ class _SettingsState extends State<Settings> {
                         var box = await Hive.openBox(SETUP);
                         if (box.isNotEmpty) {
                           var data = box.get(SETUP);
+                          print(data);
+                          Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => Setup(data: data),
+                              ));
+                          context.read<LoadingBloc>().add(Loading(false));
+                        } else {
+                          Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => Setup(data: []),
+                              ));
+                          context.read<LoadingBloc>().add(Loading(false));
                         }
-                        Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => Setup(),
-                            ));
-                        context.read<LoadingBloc>().add(Loading(false));
                       },
                       child: const Material(
                         borderRadius: BorderRadius.all(Radius.circular(5)),

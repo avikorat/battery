@@ -6,6 +6,7 @@ import 'package:battery/utils/utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
+import 'package:syncfusion_flutter_gauges/gauges.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -24,6 +25,7 @@ class _MainScreenState extends State<MainScreen> {
   BluetoothCharacteristic? _characteristic;
 
   final List<String> _names = [
+    "Battery Capacity",
     "Battery Chemistry",
     "Status",
     "Voltage",
@@ -39,6 +41,7 @@ class _MainScreenState extends State<MainScreen> {
     String? voltage;
     String? current;
     String? chargeTime;
+    String? batteryCapacity;
 
     for (var dataElem in data) {
       List<String> values = dataElem.split(":");
@@ -111,9 +114,23 @@ class _MainScreenState extends State<MainScreen> {
         } catch (e) {
           print(e);
         }
+
+// 21 for battery capacity
+      } else if (values[1] == '21') {
+        try {
+          int _batteryCapacity = int.parse(values[2]);
+          if (_batteryCapacity == 0) {
+            batteryCapacity = "0.00";
+          } else {
+            batteryCapacity = _batteryCapacity.toString();
+          }
+        } catch (e) {
+          print(e);
+        }
       }
     }
     List<String> d = [
+      batteryCapacity ?? '0.00',
       chemistryValue ?? "",
       batteryStatus ?? "No Battery",
       voltage ?? "0.00",
@@ -192,15 +209,14 @@ class _MainScreenState extends State<MainScreen> {
         _gettingData(state);
         return BlocBuilder<ParseDataBloc, List<dynamic>>(
           builder: (context, data) {
-            return GridView.builder(
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-              ),
+            return ListView.builder(
               itemCount: data.length,
               itemBuilder: (BuildContext context, int index) {
                 return Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: _gridTiles(data, index),
+                  padding: const EdgeInsets.all(8.0),
+                  child: index == 0
+                      ? _gauge(data[index])
+                      : _gridTiles(data, index),
                 );
               },
             );
@@ -213,38 +229,90 @@ class _MainScreenState extends State<MainScreen> {
   // Grid tile widget
   Widget _gridTiles(List<dynamic> data, int index) {
     return ClipRRect(
-      borderRadius: BorderRadius.circular(25),
+      borderRadius: BorderRadius.circular(16),
       child: Material(
         color: Colors.blueAccent,
         shadowColor: Colors.red,
         elevation: 15,
         child: Container(
+            height: 60,
             decoration: const BoxDecoration(
               gradient: LinearGradient(
                   colors: [Colors.blue, Color.fromARGB(255, 52, 50, 184)]),
             ),
             child: Center(
-                child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  _names[index],
-                  style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16),
-                ),
-                SizedBox(height: 16),
-                Text(
-                  data[index],
-                  style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16),
-                ),
-              ],
+                child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    _names[index],
+                    style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16),
+                  ),
+                  SizedBox(height: 16),
+                  Text(
+                    data[index],
+                    style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16),
+                  ),
+                ],
+              ),
             ))),
       ),
+    );
+  }
+
+  Widget _gauge(String value) {
+    double _convertedVal = double.parse(value);
+    return SizedBox(
+      height: 250,
+      child: SfRadialGauge(
+          enableLoadingAnimation: true,
+          animationDuration: 4500,
+          axes: <RadialAxis>[
+            RadialAxis(minimum: 0, maximum: 100, ranges: <GaugeRange>[
+              GaugeRange(
+                  startValue: 0,
+                  endValue: 33,
+                  color: Colors.red,
+                  startWidth: 10,
+                  endWidth: 10),
+              GaugeRange(
+                  startValue: 33,
+                  endValue: 66,
+                  color: Colors.orange,
+                  startWidth: 10,
+                  endWidth: 10),
+              GaugeRange(
+                  startValue: 66,
+                  endValue: 100,
+                  color: Colors.green,
+                  startWidth: 10,
+                  endWidth: 10)
+            ], pointers: <GaugePointer>[
+              NeedlePointer(
+                value: _convertedVal,
+                needleColor: Colors.blue,
+                needleLength: 0.6,
+                knobStyle: KnobStyle(color: Colors.blue, knobRadius: 0.05),
+                needleEndWidth: 6,
+              )
+            ], annotations: <GaugeAnnotation>[
+              GaugeAnnotation(
+                  widget: Container(
+                      child: Text(value,
+                          style: TextStyle(
+                              fontSize: 20, color: Colors.blue))),
+                  angle: 90,
+                  positionFactor: 0.7)
+            ])
+          ]),
     );
   }
 }

@@ -10,5 +10,5 @@ var customRoutes = <String, WidgetBuilder>{
   '/bluetooth': (context) => BluetoothOffScreen(),
   '/settings': (context) => Settings(),
   '/mainScreen': (context) => MainScreen(),
-  '/setup': (context) => Setup(),
+  '/setup': (context) => Setup(data: []),
 };

@@ -5,12 +5,15 @@ import 'package:battery/bloc/tab/tab_service_bloc.dart';
 import 'package:battery/bloc/tab/tab_service_events.dart';
 import 'package:battery/screen/main_screen.dart';
 import 'package:battery/utils/constants.dart';
+import 'package:battery/utils/utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:hive/hive.dart';
 
 class Setup extends StatefulWidget {
-  const Setup({Key? key}) : super(key: key);
+  List<String> data = [];
+
+  Setup({Key? key, required this.data}) : super(key: key);
 
   @override
   State<Setup> createState() => _SetupState();
@@ -42,6 +45,21 @@ class _SetupState extends State<Setup> {
   }
 
   @override
+  void initState() {
+    if (widget.data.isNotEmpty) {
+      _chargingMode = widget.data[0];
+      _batteryChemistry = widget.data[1];
+      _batteryCapacity = widget.data[2];
+      _maxChargingCurrent = widget.data[3];
+      _maxBatteryVoltage = widget.data[4];
+    } else {
+      _chargingMode = "Normal";
+      _batteryChemistry = "AGM";
+    }
+    super.initState();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
         appBar: AppBar(
@@ -60,26 +78,14 @@ class _SetupState extends State<Setup> {
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
           child: BlocBuilder<LoadingBloc, bool>(builder: (context, state) {
             return state
-                ? Center(
-                    child: Material(
-                      elevation: 10,
-                      shape: OutlineInputBorder(
-                          borderRadius: BorderRadius.all(Radius.circular(12))),
-                      child: SizedBox(
-                          height: 50,
-                          child: Column(
-                            children: [
-                              Text("Saving Battery Parameters"),
-                              CircularProgressIndicator(),
-                            ],
-                          )),
-                    ),
+                ? const Center(
+                    child:CircularProgressIndicator(),
                   )
                 : Form(
                     key: _formKey,
                     child: Column(children: [
                       DropdownButtonFormField<String>(
-                        value: _chargingMode,
+                        value: _chargingMode ?? 'Normal',
                         onChanged: (value) {
                           setState(() {
                             _chargingMode = value;
@@ -111,7 +117,7 @@ class _SetupState extends State<Setup> {
                       ),
                       _spacing(),
                       DropdownButtonFormField<String>(
-                        value: _batteryChemistry,
+                        value: _batteryChemistry ?? "AGM",
                         onChanged: (value) {
                           setState(() {
                             _batteryChemistry = value;
@@ -140,6 +146,7 @@ class _SetupState extends State<Setup> {
                       _spacing(),
                       TextFormField(
                         keyboardType: TextInputType.number,
+                        initialValue: _batteryCapacity ?? '',
                         decoration: const InputDecoration(
                             labelText: 'Battery Capacity (Ah)',
                             focusColor: Colors.white,
@@ -159,6 +166,7 @@ class _SetupState extends State<Setup> {
                       _spacing(),
                       TextFormField(
                         keyboardType: TextInputType.number,
+                        initialValue: _maxChargingCurrent ?? '',
                         decoration: const InputDecoration(
                             labelText: 'Maximum Charging Current (A)',
                             focusColor: Colors.white,
@@ -178,6 +186,7 @@ class _SetupState extends State<Setup> {
                       _spacing(),
                       TextFormField(
                         keyboardType: TextInputType.number,
+                        initialValue: _maxBatteryVoltage ?? '',
                         decoration: const InputDecoration(
                             labelText: 'Maximum Battery Voltage (V)',
                             focusColor: Colors.white,
@@ -245,6 +254,7 @@ class _SetupState extends State<Setup> {
                           color: Colors.blue,
                           textColor: Colors.white,
                           child: Center(child: Text("Save")),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                           onPressed: (() {
                             if (_formKey.currentState!.validate()) {
                               _onSaveTapped(
@@ -266,7 +276,21 @@ class _SetupState extends State<Setup> {
       required String batteryCapacity,
       required String maxBatteryVoltage,
       required String maxChargingCurrent}) async {
+
+// loading state on
     context.read<LoadingBloc>().add(Loading(true));
+
+// showing dialog box 
+    DialogBox(
+      context: context,
+      Title: "Saving Battery Parameters",
+      widget: SizedBox(
+        width: 20,
+        height: 40,
+        child: CircularProgressIndicator()),
+    );
+
+// sorting and setting data for the bluetooth
     int _chemVal = items.indexOf(batteryChemistry);
     int _batteryVal = batteryMode.indexOf(chargingMode);
     double _batteryCapa = double.parse(batteryCapacity);
@@ -278,6 +302,7 @@ class _SetupState extends State<Setup> {
         "C:0:$_chemVal;C:1:$_batteryVal;C:2:$batteryCapacity;C:3:$maxBatteryVoltage;C:4:$maxChargingCurrent;C:50:$total;C:55:0";
     List<String> elements = incomingData.split(";");
 
+// sending data to bluetooth
     try {
       for (int i = 0; i < elements.length; i++) {
         List<String> elm = elements[i].split(":");
@@ -297,11 +322,16 @@ class _SetupState extends State<Setup> {
         maxChargingCurrent,
         maxBatteryVoltage
       ];
+
+// adding data to hive
       await box.put(SETUP, setUpData);
       var dtaa = box.get(SETUP);
+// loader stop
       context.read<LoadingBloc>().add(Loading(false));
-      context.read<TabServiceBloc>().add(UpdateTabList(0));
       Navigator.pop(context);
+      Navigator.pop(context);
+      context.read<TabServiceBloc>().add(UpdateTabList(0));
+      
     } catch (e) {
       print(e);
     }
