@@ -1,3 +1,4 @@
+import 'package:battery/bloc/charastric/charasterics_bloc.dart';
 import 'package:battery/bloc/parse_data/parse_data_bloc.dart';
 import 'package:battery/bloc/parse_data/parse_data_event.dart';
 import 'package:battery/bloc/service/service_bloc.dart';
@@ -15,8 +16,6 @@ class MainScreen extends StatefulWidget {
   @override
   State<MainScreen> createState() => _MainScreenState();
 }
-
-BluetoothCharacteristic? CHARACTERISTICS;
 
 class _MainScreenState extends State<MainScreen> {
   List<String> _packates = [];
@@ -159,8 +158,6 @@ class _MainScreenState extends State<MainScreen> {
         _finalParsedData.last += element;
         _parsedPackates = "";
         _packates = [];
-      } else if (element.startsWith("C:")) {
-        print(element);
       }
 
       if (_finalParsedData.isNotEmpty &&
@@ -188,7 +185,9 @@ class _MainScreenState extends State<MainScreen> {
         (element) {
           if (convertUUID(element.uuid.toString()) == CHARACTERISTIC) {
             _characteristic = element;
-            CHARACTERISTICS = element;
+            context
+                .read<CharastericsBloc>()
+                .add(CharastericsEventData([element]));
           }
         },
       );
@@ -279,18 +278,24 @@ class _MainScreenState extends State<MainScreen> {
             RadialAxis(minimum: 0, maximum: 100, ranges: <GaugeRange>[
               GaugeRange(
                   startValue: 0,
-                  endValue: 33,
+                  endValue: 25,
                   color: Colors.red,
                   startWidth: 10,
                   endWidth: 10),
               GaugeRange(
-                  startValue: 33,
-                  endValue: 66,
+                  startValue: 25,
+                  endValue: 45,
+                  color: Colors.yellow,
+                  startWidth: 10,
+                  endWidth: 10),
+              GaugeRange(
+                  startValue: 45,
+                  endValue: 70,
                   color: Colors.orange,
                   startWidth: 10,
                   endWidth: 10),
               GaugeRange(
-                  startValue: 66,
+                  startValue: 70,
                   endValue: 100,
                   color: Colors.green,
                   startWidth: 10,

@@ -1,8 +1,10 @@
 import 'dart:io';
 
+import 'package:battery/bloc/charastric/charasterics_bloc.dart';
 import 'package:battery/bloc/loading/loading_bloc.dart';
 import 'package:battery/bloc/parse_data/parse_data_bloc.dart';
 import 'package:battery/bloc/service/service_bloc.dart';
+import 'package:battery/bloc/setting/setting_bloc.dart';
 import 'package:battery/bloc/tab/tab_service_bloc.dart';
 import 'package:battery/utils/constants.dart';
 import 'package:battery/utils/routes.dart';
@@ -23,7 +25,10 @@ void main() async {
     BlocProvider<ServiceBloc>(create: (BuildContext context) => ServiceBloc()),
     BlocProvider<ParseDataBloc>(
         create: (BuildContext context) => ParseDataBloc()),
-    BlocProvider<LoadingBloc>(create: (BuildContext context) => LoadingBloc())
+    BlocProvider<LoadingBloc>(create: (BuildContext context) => LoadingBloc()),
+    BlocProvider<CharastericsBloc>(
+        create: (BuildContext context) => CharastericsBloc()),
+    BlocProvider<SettingBloc>(create: (BuildContext context) => SettingBloc()),
   ], child: const MyApp()));
 }
 

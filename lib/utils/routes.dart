@@ -10,5 +10,5 @@ var customRoutes = <String, WidgetBuilder>{
   '/home': (context) => HomeScreen(),
   '/settings': (context) => Settings(),
   '/mainScreen': (context) => MainScreen(),
-  '/setup': (context) => Setup(data: []),
+//  '/setup': (context) => Setup(data: []),
 };

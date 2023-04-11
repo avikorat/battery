@@ -19,8 +19,6 @@ class SearchBluetoothScreen extends StatefulWidget {
   State<SearchBluetoothScreen> createState() => _SearchBluetoothScreenState();
 }
 
-BluetoothDevice? DEVICE;
-
 class _SearchBluetoothScreenState extends State<SearchBluetoothScreen> {
 // **************  BLUETOOTH OFF WIDGET ****************
   _bluetoothOffWidget(bool state) {
@@ -33,17 +31,19 @@ class _SearchBluetoothScreenState extends State<SearchBluetoothScreen> {
               mainAxisSize: MainAxisSize.min,
               children: <Widget>[
                 const Icon(
-                  Icons.bluetooth_disabled,
+                  Icons.bluetooth_disabled_rounded,
                   size: 200.0,
                   color: Colors.blue,
                 ),
+               
                 Text(
                   'Bluetooth Adapter is ${widget.state != null ? widget.state.toString().substring(15) : 'not available'}.',
                   style: Theme.of(context)
                       .primaryTextTheme
                       .subtitle2
-                      ?.copyWith(color: Colors.black),
+                      ?.copyWith(color: Colors.black, fontSize: 16),
                 ),
+                 SizedBox(height: 10),
                 ElevatedButton(
                   child: const Text(
                     'TURN ON',
@@ -54,7 +54,7 @@ class _SearchBluetoothScreenState extends State<SearchBluetoothScreen> {
                           context.read<LoadingBloc>().add(Loading(true));
                           FlutterBluePlus.instance.turnOn();
                           FlutterBluePlus.instance
-                              .scan(timeout: const Duration(seconds: 10));
+                              .scan(timeout: const Duration(seconds: 6));
                           context.read<LoadingBloc>().add(Loading(false));
                         }
                       : null,
@@ -91,13 +91,15 @@ class _SearchBluetoothScreenState extends State<SearchBluetoothScreen> {
                   StreamBuilder<List<ScanResult>>(
                     stream: FlutterBluePlus.instance.scanResults,
                     initialData: const [],
-                    builder: (c, snapshot) => Column(
+                    builder: (c, snapshot) => 
+                    Column(
                       children: snapshot.data!
                           .map(
                             (r) => r.device.name.isNotEmpty
                                 ? _scanTile(
                                     r,
                                     () async {
+                                      print(await r.device.readRssi);
                                       context
                                           .read<LoadingBloc>()
                                           .add(Loading(true));
@@ -105,7 +107,7 @@ class _SearchBluetoothScreenState extends State<SearchBluetoothScreen> {
                                       FlutterBluePlus.instance.stopScan();
                                       List<BluetoothService> services =
                                           await r.device.discoverServices();
-                                      DEVICE = r.device;
+                                   
                                       if (mounted) {
                                         context
                                             .read<ServiceBloc>()
@@ -116,7 +118,7 @@ class _SearchBluetoothScreenState extends State<SearchBluetoothScreen> {
                                         context
                                             .read<LoadingBloc>()
                                             .add(Loading(false));
-                                        Navigator.pushNamed(context, "/home");
+                                        Navigator.pushNamed(context, "/home", arguments: {"BluetoothDevice": r.device});
                                       }
                                     },
                                   )
@@ -175,7 +177,7 @@ class _SearchBluetoothScreenState extends State<SearchBluetoothScreen> {
                   onPressed: () async {
                     context.read<LoadingBloc>().add(Loading(true));
                     FlutterBluePlus.instance.stopScan();
-                    DEVICE = d;
+                  
                     List<BluetoothService> services =
                         await d.discoverServices();
 
@@ -184,7 +186,7 @@ class _SearchBluetoothScreenState extends State<SearchBluetoothScreen> {
                         .add(UpdateServiceList(services));
                     // context.read<TabServiceBloc>().add(UpdateTabList(0));
                     context.read<LoadingBloc>().add(Loading(false));
-                    Navigator.pushNamed(context, '/home');
+                    Navigator.pushNamed(context, '/home', arguments: {"BluetoothDevice": d});
                   },
                 );
               }

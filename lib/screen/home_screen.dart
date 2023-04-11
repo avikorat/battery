@@ -1,11 +1,14 @@
+import 'package:battery/bloc/setting/setting_bloc.dart';
 import 'package:battery/bloc/tab/tab_service_bloc.dart';
 import 'package:battery/bloc/tab/tab_service_events.dart';
 import 'package:battery/screen/search_bluetooth_screen.dart';
 import 'package:battery/screen/main_screen.dart';
 import 'package:battery/screen/settings.dart';
+import 'package:battery/utils/constants.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
+import 'package:hive/hive.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -17,13 +20,11 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final _pageNo = [
     const MainScreen(),
-   // const BluetoothOffScreen(),
     const Settings()
   ];
 
   final _bottomBarItems = const [
     BottomNavigationBarItem(icon: Icon(Icons.home), label: "Home"),
-   // BottomNavigationBarItem(icon: Icon(Icons.bluetooth), label: "Battery"),
     BottomNavigationBarItem(icon: Icon(Icons.settings), label: "Settings")
   ];
 
@@ -57,22 +58,35 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+ 
+ _fetchingDataFromHive() async {
+    var box = await Hive.openBox(SETUP);
+    if (box.isNotEmpty) {
+      var data = box.get(SETUP);    
+      context.read<SettingBloc>().add(UpdateSettingData(data));
+    }
+  }
+  @override
+  void initState() {
+    _fetchingDataFromHive();
+    super.initState();
+  }
+
   @override
   Widget build(BuildContext context) {
+     final arguments = (ModalRoute.of(context)?.settings.arguments ?? <String, dynamic>{}) as Map;
+     print(arguments["BluetoothDevice"]);
     return StreamBuilder<BluetoothState>(
         stream: FlutterBluePlus.instance.state,
         initialData: BluetoothState.unknown,
         builder: (c, snapshot) {
-          if (DEVICE == null) {
-            // context.read<TabServiceBloc>().add(UpdateTabList(
-            //     snapshot.connectionState == BluetoothState.on ? 0 : 1));
+          if (arguments["BluetoothDevice"] == null) {
+         
             Navigator.pop(context);
             if (snapshot.connectionState == BluetoothState.on) {
               FlutterBluePlus.instance.scan(
-                  scanMode: ScanMode.lowPower, timeout: const Duration(seconds: 10));
+                  scanMode: ScanMode.lowPower, timeout: const Duration(seconds: 6));
             }
-          } else {
-            context.read<TabServiceBloc>().add(UpdateTabList(0));
           }
 
           return BlocBuilder<TabServiceBloc, dynamic>(
