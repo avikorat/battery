@@ -1,6 +1,6 @@
 import 'package:battery/bloc/tab/tab_service_bloc.dart';
 import 'package:battery/bloc/tab/tab_service_events.dart';
-import 'package:battery/screen/bluetooth_off_screen.dart';
+import 'package:battery/screen/search_bluetooth_screen.dart';
 import 'package:battery/screen/main_screen.dart';
 import 'package:battery/screen/settings.dart';
 import 'package:flutter/material.dart';
@@ -17,13 +17,13 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final _pageNo = [
     const MainScreen(),
-    const BluetoothOffScreen(),
+   // const BluetoothOffScreen(),
     const Settings()
   ];
 
   final _bottomBarItems = const [
     BottomNavigationBarItem(icon: Icon(Icons.home), label: "Home"),
-    BottomNavigationBarItem(icon: Icon(Icons.bluetooth), label: "Battery"),
+   // BottomNavigationBarItem(icon: Icon(Icons.bluetooth), label: "Battery"),
     BottomNavigationBarItem(icon: Icon(Icons.settings), label: "Settings")
   ];
 
@@ -64,8 +64,9 @@ class _HomeScreenState extends State<HomeScreen> {
         initialData: BluetoothState.unknown,
         builder: (c, snapshot) {
           if (DEVICE == null) {
-            context.read<TabServiceBloc>().add(UpdateTabList(
-                snapshot.connectionState == BluetoothState.on ? 0 : 1));
+            // context.read<TabServiceBloc>().add(UpdateTabList(
+            //     snapshot.connectionState == BluetoothState.on ? 0 : 1));
+            Navigator.pop(context);
             if (snapshot.connectionState == BluetoothState.on) {
               FlutterBluePlus.instance.scan(
                   scanMode: ScanMode.lowPower, timeout: const Duration(seconds: 10));

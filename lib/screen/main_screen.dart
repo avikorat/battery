@@ -1,6 +1,7 @@
 import 'package:battery/bloc/parse_data/parse_data_bloc.dart';
 import 'package:battery/bloc/parse_data/parse_data_event.dart';
 import 'package:battery/bloc/service/service_bloc.dart';
+import 'package:battery/screen/search_bluetooth_screen.dart';
 import 'package:battery/utils/constants.dart';
 import 'package:battery/utils/utils.dart';
 import 'package:flutter/material.dart';
@@ -203,27 +204,26 @@ class _MainScreenState extends State<MainScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color.fromARGB(96, 228, 227, 227),
-      body: BlocBuilder<ServiceBloc, List<BluetoothService>>(
-          builder: (context, state) {
-        _gettingData(state);
-        return BlocBuilder<ParseDataBloc, List<dynamic>>(
-          builder: (context, data) {
-            return ListView.builder(
-              itemCount: data.length,
-              itemBuilder: (BuildContext context, int index) {
-                return Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: index == 0
-                      ? _gauge(data[index])
-                      : _gridTiles(data, index),
-                );
-              },
-            );
-          },
-        );
-      }),
-    );
+        backgroundColor: Color.fromARGB(96, 228, 227, 227),
+        body: BlocBuilder<ServiceBloc, List<BluetoothService>>(
+            builder: (context, state) {
+          _gettingData(state);
+          return BlocBuilder<ParseDataBloc, List<dynamic>>(
+            builder: (context, data) {
+              return ListView.builder(
+                itemCount: data.length,
+                itemBuilder: (BuildContext context, int index) {
+                  return Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: index == 0
+                        ? _gauge(data[index])
+                        : _gridTiles(data, index),
+                  );
+                },
+              );
+            },
+          );
+        }));
   }
 
   // Grid tile widget
@@ -307,8 +307,7 @@ class _MainScreenState extends State<MainScreen> {
               GaugeAnnotation(
                   widget: Container(
                       child: Text(value,
-                          style: TextStyle(
-                              fontSize: 20, color: Colors.blue))),
+                          style: TextStyle(fontSize: 20, color: Colors.blue))),
                   angle: 90,
                   positionFactor: 0.7)
             ])

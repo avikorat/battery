@@ -64,7 +64,7 @@ class _SettingsState extends State<Settings> {
                         }
                       },
                       child: const Material(
-                        borderRadius: BorderRadius.all(Radius.circular(5)),
+                        borderRadius: BorderRadius.all(Radius.circular(10)),
                         elevation: 10,
                         child: ListTile(
                           title: Text("Setup"),
@@ -75,7 +75,7 @@ class _SettingsState extends State<Settings> {
                   const Padding(
                     padding: EdgeInsets.all(8.0),
                     child: Material(
-                      borderRadius: BorderRadius.all(Radius.circular(5)),
+                      borderRadius: BorderRadius.all(Radius.circular(10)),
                       elevation: 10,
                       child: ListTile(
                         title: Text("Utilities"),

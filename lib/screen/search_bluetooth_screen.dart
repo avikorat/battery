@@ -10,18 +10,18 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 
-class BluetoothOffScreen extends StatefulWidget {
-  const BluetoothOffScreen({Key? key, this.state}) : super(key: key);
+class SearchBluetoothScreen extends StatefulWidget {
+  const SearchBluetoothScreen({Key? key, this.state}) : super(key: key);
 
   final BluetoothState? state;
 
   @override
-  State<BluetoothOffScreen> createState() => _BluetoothOffScreenState();
+  State<SearchBluetoothScreen> createState() => _SearchBluetoothScreenState();
 }
 
 BluetoothDevice? DEVICE;
 
-class _BluetoothOffScreenState extends State<BluetoothOffScreen> {
+class _SearchBluetoothScreenState extends State<SearchBluetoothScreen> {
 // **************  BLUETOOTH OFF WIDGET ****************
   _bluetoothOffWidget(bool state) {
     return state
@@ -116,6 +116,7 @@ class _BluetoothOffScreenState extends State<BluetoothOffScreen> {
                                         context
                                             .read<LoadingBloc>()
                                             .add(Loading(false));
+                                        Navigator.pushNamed(context, "/home");
                                       }
                                     },
                                   )
@@ -181,8 +182,9 @@ class _BluetoothOffScreenState extends State<BluetoothOffScreen> {
                     context
                         .read<ServiceBloc>()
                         .add(UpdateServiceList(services));
-                    context.read<TabServiceBloc>().add(UpdateTabList(0));
+                    // context.read<TabServiceBloc>().add(UpdateTabList(0));
                     context.read<LoadingBloc>().add(Loading(false));
+                    Navigator.pushNamed(context, '/home');
                   },
                 );
               }
@@ -201,7 +203,7 @@ class _BluetoothOffScreenState extends State<BluetoothOffScreen> {
         title: Text('Bluetooth', style: TextStyle(color: Colors.white)),
         centerTitle: true,
       ),
-      backgroundColor: Color.fromARGB(96, 228, 227, 227),
+      //backgroundColor: Color.fromARGB(96, 228, 227, 227),
       body: BlocBuilder<LoadingBloc, bool>(builder: (context, state) {
         return StreamBuilder<BluetoothState>(
             stream: FlutterBluePlus.instance.state,

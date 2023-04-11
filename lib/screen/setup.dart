@@ -79,7 +79,7 @@ class _SetupState extends State<Setup> {
           child: BlocBuilder<LoadingBloc, bool>(builder: (context, state) {
             return state
                 ? const Center(
-                    child:CircularProgressIndicator(),
+                    child: CircularProgressIndicator(),
                   )
                 : Form(
                     key: _formKey,
@@ -203,58 +203,13 @@ class _SetupState extends State<Setup> {
                           _maxBatteryVoltage = value;
                         },
                       ),
-
-                      // _spacing(),
-                      // TextFormField(
-                      //   keyboardType: TextInputType.number,
-                      //   decoration: const InputDecoration(
-                      //       labelText: 'Maximum Charging Time (Hours)',
-                      //       focusColor: Colors.white,
-                      //       border: OutlineInputBorder(
-                      //           borderRadius: BorderRadius.all(Radius.circular(6)))),
-                      //   validator: (value) {
-                      //     if (value == null || value.isEmpty) {
-                      //       return 'Please enter a maximum charging time';
-                      //     }
-                      //     return null;
-                      //   },
-                      //   onChanged: (value) {
-                      //     _maxChargingTime = value;
-                      //   },
-                      // ),
-                      // _spacing(),
-                      // DropdownButtonFormField<String>(
-                      //   value: _batteryRecovery,
-                      //   onChanged: (value) {
-                      //     setState(() {
-                      //       _batteryRecovery = value;
-                      //     });
-                      //   },
-                      //   decoration: const InputDecoration(
-                      //       labelText: 'Battery Recovery',
-                      //       focusColor: Colors.white,
-                      //       border: OutlineInputBorder(
-                      //           borderRadius: BorderRadius.all(Radius.circular(6)))),
-                      //   items: <String>["On", "Off"]
-                      //       .map<DropdownMenuItem<String>>((String value) {
-                      //     return DropdownMenuItem<String>(
-                      //       value: value,
-                      //       child: Text(value),
-                      //     );
-                      //   }).toList(),
-                      //   validator: (value) {
-                      //     if (value == null || value.isEmpty) {
-                      //       return 'Please select a battery recovery option.';
-                      //     }
-                      //     return null;
-                      //   },
-                      // ),
                       _spacing(),
                       MaterialButton(
                           color: Colors.blue,
                           textColor: Colors.white,
                           child: Center(child: Text("Save")),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8)),
                           onPressed: (() {
                             if (_formKey.currentState!.validate()) {
                               _onSaveTapped(
@@ -276,18 +231,15 @@ class _SetupState extends State<Setup> {
       required String batteryCapacity,
       required String maxBatteryVoltage,
       required String maxChargingCurrent}) async {
-
 // loading state on
     context.read<LoadingBloc>().add(Loading(true));
 
-// showing dialog box 
+// showing dialog box
     DialogBox(
       context: context,
       Title: "Saving Battery Parameters",
-      widget: SizedBox(
-        width: 20,
-        height: 40,
-        child: CircularProgressIndicator()),
+      widget:
+          SizedBox(width: 20, height: 40, child: CircularProgressIndicator()),
     );
 
 // sorting and setting data for the bluetooth
@@ -331,7 +283,6 @@ class _SetupState extends State<Setup> {
       Navigator.pop(context);
       Navigator.pop(context);
       context.read<TabServiceBloc>().add(UpdateTabList(0));
-      
     } catch (e) {
       print(e);
     }
