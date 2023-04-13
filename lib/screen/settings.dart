@@ -101,9 +101,7 @@ class _SettingsState extends State<Settings> {
                                 DropdownButtonFormField<String>(
                                   value: _chargingMode ?? 'Normal',
                                   onChanged: (value) {
-                                    setState(() {
-                                      _chargingMode = value;
-                                    });
+                                    _chargingMode = value;
                                   },
                                   decoration:
                                       _decoration('Battery Charging Mode'),
@@ -130,9 +128,7 @@ class _SettingsState extends State<Settings> {
                                 DropdownButtonFormField<String>(
                                   value: _batteryChemistry ?? "AGM",
                                   onChanged: (value) {
-                                    setState(() {
-                                      _batteryChemistry = value;
-                                    });
+                                    _batteryChemistry = value;
                                   },
                                   decoration: _decoration('Battery Chemistry'),
                                   items: <String>[

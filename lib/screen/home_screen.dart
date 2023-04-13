@@ -26,7 +26,7 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final String deviceId = "20:10:4B:80:64:C5";
   FlutterBluePlus flutterBlue = FlutterBluePlus.instance;
-  late BluetoothDevice device;
+  BluetoothDevice? device;
   bool connected = false;
   List<BluetoothService> services = [];
 
@@ -79,6 +79,8 @@ class _HomeScreenState extends State<HomeScreen> {
         .showSnackBar(SnackBar(content: Text(message)));
   }
 
+// ********************* Checking and getting user permission *************************
+
   void checkPermissions() async {
     await Permission.location.request();
     await Permission.bluetooth.request();
@@ -121,7 +123,6 @@ class _HomeScreenState extends State<HomeScreen> {
         }
       }
     } else if (locationStatus.isDenied) {
-      
       DialogUtils.showCustomDialog(context,
           title: "Permission",
           alertWidget: Text(
@@ -162,7 +163,7 @@ class _HomeScreenState extends State<HomeScreen> {
       } else {
         DialogUtils.showCustomDialog(context,
             title: "Permission",
-            alertWidget: Text(
+            alertWidget: const Text(
                 "Location permission is required to scan for Bluetooth devices."),
             buttonText: "Open Settings", actionCall: () {
           openAppSettings();
@@ -171,23 +172,9 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  void connectToDevice() async {
-    // bool isBluetoothOn = await flutterBlue.isOn;
-    // if (!isBluetoothOn) {
-    //   isBluetoothOn = await flutterBlue.isOn;
-    //   if (!isBluetoothOn) {
-    //     DialogUtils.showCustomDialog(context,
-    //         title: "Important",
-    //         alertWidget: const Text(
-    //             "Please turn on Bluetooth to connect to the device."),
-    //         buttonText: "Close", actionCall: () {
-    //       Navigator.pop(context);
-    //     });
-    //     showToast('Please turn on Bluetooth to connect to the device');
-    //     return;
-    //   }
-    // }
+// ********************* Connect with already connected devices *************************
 
+  void connectToDevice() async {
     try {
       List<BluetoothDevice> devices = await flutterBlue.connectedDevices;
       for (BluetoothDevice d in devices) {
@@ -203,21 +190,26 @@ class _HomeScreenState extends State<HomeScreen> {
     }
 
     if (!connected) {
-      var result = await flutterBlue
-          .scan(timeout: Duration(seconds: 15))
-          .listen((event) {
-        if (event.device.id.toString() == deviceId) {
-          device = event.device;
-          connectDevice();
-        }
-      });
+      try {
+        await flutterBlue.stopScan();
+        flutterBlue.scan(timeout: const Duration(seconds: 6)).listen((event) {
+          if (event.device.id.toString() == deviceId) {
+            device = event.device;
+            connectDevice();
+          }
+        });
+      } catch (error) {
+        print(error);
+      }
     }
   }
 
+// ********************* Connect with new devices *************************
+
   void connectDevice() async {
     try {
-      await device.connect();
-
+      var response = await device?.connect();
+      flutterBlue.stopScan();
       connected = true;
       discoverServices();
     } catch (e) {
@@ -226,9 +218,11 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+// ********************* Discover services of connected device *************************
+
   void discoverServices() async {
     try {
-      List<BluetoothService> _services = await device.discoverServices();
+      List<BluetoothService> _services = await device!.discoverServices();
       context.read<ServiceBloc>().add(UpdateServiceList(_services));
     } catch (e) {
       print('Error discovering services: $e');
@@ -241,23 +235,6 @@ class _HomeScreenState extends State<HomeScreen> {
     _fetchingDataFromHive();
     checkPermissions();
     super.initState();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return BlocBuilder<TabServiceBloc, dynamic>(builder: (context, state) {
-      return StreamBuilder<BluetoothState>(
-          stream: flutterBlue.state,
-          builder: (context, snapshot) {
-            if (snapshot.data == BluetoothState.off) {
-              return _bluetoothOffWidget();
-            }
-            return Scaffold(
-              body: _pageNo[state],
-              bottomNavigationBar: _bottomBar(state),
-            );
-          });
-    });
   }
 
 // **************  BLUETOOTH OFF WIDGET ****************
@@ -286,12 +263,16 @@ class _HomeScreenState extends State<HomeScreen> {
                 style: TextStyle(color: Colors.white),
               ),
               onPressed: Platform.isAndroid
-                  ? () {
-                      context.read<LoadingBloc>().add(Loading(true));
-                      FlutterBluePlus.instance.turnOn();
-                      _fetchingDataFromHive();
-                      connected = false;
-                      checkPermissions();
+                  ? () async {
+                      try {
+                        context.read<LoadingBloc>().add(Loading(true));
+                        await FlutterBluePlus.instance.turnOn();
+                        await _fetchingDataFromHive();
+                        connected = false;
+                        checkPermissions();
+                      } catch (e) {
+                        print(e);
+                      }
                     }
                   : null,
             ),
@@ -299,5 +280,24 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ),
     );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocBuilder<TabServiceBloc, dynamic>(builder: (context, state) {
+      return StreamBuilder<BluetoothState>(
+          stream: flutterBlue.state,
+          builder: (context, snapshot) {
+            if (snapshot.data == BluetoothState.off) {
+              context.read<ServiceBloc>().add(UpdateServiceList([]));
+              device?.disconnect();
+              return _bluetoothOffWidget();
+            }
+            return Scaffold(
+              body: _pageNo[state],
+              bottomNavigationBar: _bottomBar(state),
+            );
+          });
+    });
   }
 }
