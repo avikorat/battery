@@ -30,7 +30,7 @@ DialogBox(
                   ),
                   Text(
                     Title,
-                    style: const TextStyle(color: Colors.white),
+                    style:const TextStyle(color: Colors.white),
                   )
                 ]),
               )

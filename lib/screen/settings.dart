@@ -6,7 +6,6 @@ import 'package:battery/bloc/loading/loading_event.dart';
 import 'package:battery/bloc/setting/setting_bloc.dart';
 import 'package:battery/bloc/tab/tab_service_bloc.dart';
 import 'package:battery/bloc/tab/tab_service_events.dart';
-import 'package:battery/screen/setup.dart';
 import 'package:battery/utils/constants.dart';
 import 'package:battery/utils/utils.dart';
 import 'package:flutter/material.dart';
@@ -106,7 +105,8 @@ class _SettingsState extends State<Settings> {
                                       _chargingMode = value;
                                     });
                                   },
-                                  decoration: _decoration('Battery Charging Mode'),                                
+                                  decoration:
+                                      _decoration('Battery Charging Mode'),
                                   items: <String>[
                                     'Boost',
                                     'Normal',
@@ -159,7 +159,8 @@ class _SettingsState extends State<Settings> {
                                 TextFormField(
                                   keyboardType: TextInputType.number,
                                   initialValue: _batteryCapacity ?? '',
-                                  decoration: _decoration('Battery Capacity (Ah)'),
+                                  decoration:
+                                      _decoration('Battery Capacity (Ah)'),
                                   validator: (value) {
                                     if (value == null || value.isEmpty) {
                                       return 'Please enter a battery capacity';
@@ -174,7 +175,8 @@ class _SettingsState extends State<Settings> {
                                 TextFormField(
                                   keyboardType: TextInputType.number,
                                   initialValue: _maxChargingCurrent ?? '',
-                                  decoration: _decoration('Maximum Charging Current (A)'),
+                                  decoration: _decoration(
+                                      'Maximum Charging Current (A)'),
                                   validator: (value) {
                                     if (value == null || value.isEmpty) {
                                       return 'Please enter a maximum charging current';
@@ -189,7 +191,8 @@ class _SettingsState extends State<Settings> {
                                 TextFormField(
                                   keyboardType: TextInputType.number,
                                   initialValue: _maxBatteryVoltage ?? '',
-                                  decoration: _decoration('Maximum Battery Voltage (V)'),
+                                  decoration: _decoration(
+                                      'Maximum Battery Voltage (V)'),
                                   validator: (value) {
                                     if (value == null || value.isEmpty) {
                                       return 'Please enter a maximum battery voltage';
