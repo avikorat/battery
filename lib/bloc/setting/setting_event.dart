@@ -4,7 +4,7 @@ part of 'setting_bloc.dart';
 abstract class SettingEvent {}
 
 class UpdateSettingData extends SettingEvent {
-  final dynamic setting;
+  SettingData data;
 
-  UpdateSettingData(this.setting);
+  UpdateSettingData(this.data);
 }

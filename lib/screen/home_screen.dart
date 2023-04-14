@@ -1,9 +1,11 @@
+import 'dart:async';
 import 'dart:io';
 import 'package:battery/bloc/loading/loading_bloc.dart';
 import 'package:battery/bloc/loading/loading_event.dart';
 import 'package:battery/bloc/service/service_bloc.dart';
 import 'package:battery/bloc/service/service_event.dart';
 import 'package:battery/bloc/setting/setting_bloc.dart';
+import 'package:battery/bloc/setting/setting_data.dart';
 import 'package:battery/bloc/tab/tab_service_bloc.dart';
 import 'package:battery/bloc/tab/tab_service_events.dart';
 import 'package:battery/screen/main_screen.dart';
@@ -14,6 +16,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'package:hive/hive.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -29,6 +32,7 @@ class _HomeScreenState extends State<HomeScreen> {
   BluetoothDevice? device;
   bool connected = false;
   List<BluetoothService> services = [];
+  List<String> dataFromHive = [];
 
   final _pageNo = [const MainScreen(), const Settings()];
 
@@ -66,12 +70,40 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  readOrWriteData() async {
+    final directory = await getApplicationDocumentsDirectory();
+    final path = '${directory.path}/profile.txt';
+    final file = File(path);
+    final exist = await file.exists();
+    String data = "";
+    if (exist) {
+      data = await file.readAsString();
+      context.read<SettingBloc>().add(UpdateSettingData(SettingData(
+          fileData: data,
+          batteryBrand: dataFromHive.length > 0 ? dataFromHive[0] : '',
+          batterySavedValue: dataFromHive.length > 0 ? dataFromHive[1] : '')));
+    } else {
+      file.writeAsString(
+          "PowerSonic=${PowerSonic}\nDiscover=${Discover}\nRitarPower=${RitarPower}");
+      context.read<SettingBloc>().add(UpdateSettingData(exist
+          ? SettingData(
+              fileData: data,
+              batteryBrand: dataFromHive.length > 0 ? dataFromHive[0] : '',
+              batterySavedValue: dataFromHive.length > 0 ? dataFromHive[1] : '')
+          : SettingData(
+              fileData:
+                  "PowerSonic=${PowerSonic}\nDiscover=${Discover}\nRitarPower=${RitarPower}",
+              batteryBrand: '',
+              batterySavedValue: '')));
+    }
+  }
+
   _fetchingDataFromHive() async {
     var box = await Hive.openBox(SETUP);
     if (box.isNotEmpty) {
-      var data = box.get(SETUP);
-      context.read<SettingBloc>().add(UpdateSettingData(data));
+      dataFromHive = box.get(SETUP);
     }
+    await box.close();
   }
 
   void showToast(String message) {
@@ -81,94 +113,38 @@ class _HomeScreenState extends State<HomeScreen> {
 
 // ********************* Checking and getting user permission *************************
 
-  void checkPermissions() async {
-    await Permission.location.request();
-    await Permission.bluetooth.request();
-    PermissionStatus locationStatus = await Permission.locationWhenInUse.status;
-    if (locationStatus.isGranted) {
-      // Check Bluetooth permission
-      PermissionStatus bluetoothStatus = await Permission.bluetooth.status;
-      if (bluetoothStatus.isGranted) {
-        connectToDevice();
-      } else if (bluetoothStatus.isDenied) {
-        DialogUtils.showCustomDialog(context,
-            title: "Permission",
-            alertWidget:
-                Text("Bluetooth permission is required to use this app."),
-            buttonText: "Open Settings", actionCall: () {
-          openAppSettings();
-        });
-        // openAppSettings();
-      } else if (bluetoothStatus.isPermanentlyDenied) {
-        DialogUtils.showCustomDialog(context,
-            title: "Permission",
-            alertWidget: Text(
-                "Bluetooth permission is required to use this app. Please enable it in app settings."),
-            buttonText: "Open Settings", actionCall: () {
-          openAppSettings();
-        });
-      } else {
-        PermissionStatus newStatus = await Permission.bluetooth.request();
-        if (newStatus.isGranted) {
-          connectToDevice();
-        } else {
-          showToast('');
-          DialogUtils.showCustomDialog(context,
-              title: "Permission",
-              alertWidget:
-                  Text("Bluetooth permission is required to use this app."),
-              buttonText: "Open Settings", actionCall: () {
-            openAppSettings();
-          });
-        }
-      }
-    } else if (locationStatus.isDenied) {
+  void requestPermissions() async {
+    Map<Permission, PermissionStatus> statuses = await [
+      Permission.bluetoothScan,
+      Permission.bluetoothConnect,
+      Permission.bluetoothAdvertise,
+      Permission.location,
+    ].request();
+
+    if (statuses[Permission.bluetoothScan]!.isDenied ||
+        statuses[Permission.bluetoothConnect]!.isDenied ||
+        statuses[Permission.bluetoothAdvertise]!.isDenied ||
+        statuses[Permission.location]!.isDenied) {
       DialogUtils.showCustomDialog(context,
           title: "Permission",
-          alertWidget: Text(
-              "Location permission is required to scan for Bluetooth devices."),
+          alertWidget:
+              Text("Please grant us permission to operate fully functionally."),
           buttonText: "Open Settings", actionCall: () {
         openAppSettings();
       });
-    } else if (locationStatus.isPermanentlyDenied) {
+    } else if (statuses[Permission.bluetoothScan]!.isPermanentlyDenied ||
+        statuses[Permission.bluetoothConnect]!.isPermanentlyDenied ||
+        statuses[Permission.bluetoothAdvertise]!.isPermanentlyDenied ||
+        statuses[Permission.location]!.isPermanentlyDenied) {
       DialogUtils.showCustomDialog(context,
           title: "Permission",
-          alertWidget: Text(
-              "Location permission is required to scan for Bluetooth devices. Please enable it in app settings."),
+          alertWidget:
+              Text("Please grant us permission to operate fully functionally."),
           buttonText: "Open Settings", actionCall: () {
         openAppSettings();
       });
     } else {
-      PermissionStatus newStatus = await Permission.locationWhenInUse.request();
-      if (newStatus.isGranted) {
-        // Check Bluetooth permission
-        PermissionStatus bluetoothStatus = await Permission.bluetooth.status;
-        if (bluetoothStatus.isGranted) {
-          connectToDevice();
-        } else {
-          PermissionStatus newBluetoothStatus =
-              await Permission.bluetooth.request();
-          if (newBluetoothStatus.isGranted) {
-            connectToDevice();
-          } else {
-            DialogUtils.showCustomDialog(context,
-                title: "Permission",
-                alertWidget:
-                    Text("Bluetooth permission is required to use this app."),
-                buttonText: "Open Settings", actionCall: () {
-              openAppSettings();
-            });
-          }
-        }
-      } else {
-        DialogUtils.showCustomDialog(context,
-            title: "Permission",
-            alertWidget: const Text(
-                "Location permission is required to scan for Bluetooth devices."),
-            buttonText: "Open Settings", actionCall: () {
-          openAppSettings();
-        });
-      }
+      connectToDevice();
     }
   }
 
@@ -192,6 +168,7 @@ class _HomeScreenState extends State<HomeScreen> {
     if (!connected) {
       try {
         await flutterBlue.stopScan();
+
         flutterBlue.scan(timeout: const Duration(seconds: 6)).listen((event) {
           if (event.device.id.toString() == deviceId) {
             device = event.device;
@@ -233,7 +210,7 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     context.read<LoadingBloc>().add(Loading(true));
     _fetchingDataFromHive();
-    checkPermissions();
+    readOrWriteData();
     super.initState();
   }
 
@@ -257,24 +234,12 @@ class _HomeScreenState extends State<HomeScreen> {
                   ?.copyWith(color: Colors.black, fontSize: 16),
             ),
             const SizedBox(height: 10),
-            ElevatedButton(
-              child: const Text(
-                'TURN ON',
-                style: TextStyle(color: Colors.white),
-              ),
-              onPressed: Platform.isAndroid
-                  ? () async {
-                      try {
-                        context.read<LoadingBloc>().add(Loading(true));
-                        await FlutterBluePlus.instance.turnOn();
-                        await _fetchingDataFromHive();
-                        connected = false;
-                        checkPermissions();
-                      } catch (e) {
-                        print(e);
-                      }
-                    }
-                  : null,
+            Text(
+              'Please turn on the bluetooth.',
+              style: Theme.of(context)
+                  .primaryTextTheme
+                  .subtitle2
+                  ?.copyWith(color: Colors.black, fontSize: 16),
             ),
           ],
         ),
@@ -291,12 +256,19 @@ class _HomeScreenState extends State<HomeScreen> {
             if (snapshot.data == BluetoothState.off) {
               context.read<ServiceBloc>().add(UpdateServiceList([]));
               device?.disconnect();
+              connected = false;
               return _bluetoothOffWidget();
+            } else if (snapshot.data == BluetoothState.on) {
+              requestPermissions();
             }
-            return Scaffold(
-              body: _pageNo[state],
-              bottomNavigationBar: _bottomBar(state),
-            );
+            return snapshot.data == BluetoothState.on
+                ? Scaffold(
+                    body: _pageNo[state],
+                    bottomNavigationBar: _bottomBar(state),
+                  )
+                : Scaffold(
+                    body: Container(),
+                  );
           });
     });
   }

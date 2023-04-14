@@ -1,13 +1,13 @@
+import 'package:battery/bloc/setting/setting_data.dart';
 import 'package:bloc/bloc.dart';
 import 'package:meta/meta.dart';
 
 part 'setting_event.dart';
-part 'setting_state.dart';
 
-class SettingBloc extends Bloc<SettingEvent, dynamic> {
-  SettingBloc() : super([]) {
+class SettingBloc extends Bloc<SettingEvent, SettingData> {
+  SettingBloc() : super(SettingData(batteryBrand: '',batterySavedValue: '',fileData: '')) {
     on<UpdateSettingData>((event, emit) {
-      emit(event.setting);
+      emit(event.data);
     });
   }
 }

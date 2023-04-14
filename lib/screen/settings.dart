@@ -1,17 +1,20 @@
 import 'dart:convert';
-
+import 'dart:io';
 import 'package:battery/bloc/charastric/charasterics_bloc.dart';
 import 'package:battery/bloc/loading/loading_bloc.dart';
 import 'package:battery/bloc/loading/loading_event.dart';
 import 'package:battery/bloc/setting/setting_bloc.dart';
+import 'package:battery/bloc/setting/setting_data.dart';
 import 'package:battery/bloc/tab/tab_service_bloc.dart';
 import 'package:battery/bloc/tab/tab_service_events.dart';
 import 'package:battery/utils/constants.dart';
 import 'package:battery/utils/utils.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'package:hive/hive.dart';
+import 'package:path_provider/path_provider.dart';
 
 class Settings extends StatefulWidget {
   const Settings({super.key});
@@ -23,12 +26,8 @@ class Settings extends StatefulWidget {
 class _SettingsState extends State<Settings> {
   final _formKey = GlobalKey<FormState>();
 
-  String? _chargingMode;
-  String? _batteryChemistry;
-  String? _batteryCapacity;
-  String? _maxChargingCurrent;
-  String? _maxBatteryVoltage;
-  String? _maxChargingTime;
+  String? _selectedKey;
+
   // String? _batteryRecovery;
 
   List<String> items = <String>["AGM", "ATB", "GEL", "LiTh", "WET"];
@@ -38,6 +37,11 @@ class _SettingsState extends State<Settings> {
     'Economy',
     'Maintainer'
   ];
+
+  //         "C:0:$_chemVal;C:1:$_batteryVal;C:2:$batteryCapacity;C:3:$maxBatteryVoltage;C:4:$maxChargingCurrent;C:50:$total;C:55:0";
+  List<String> fileData = [];
+  List<String> _keyOfFileData = [];
+  List<String> _valuesOfFileData = [];
 
   Widget _spacing() {
     return const SizedBox(
@@ -82,36 +86,31 @@ class _SettingsState extends State<Settings> {
                     ? const Center(
                         child: CircularProgressIndicator(),
                       )
-                    : BlocBuilder<SettingBloc, dynamic>(
+                    : BlocBuilder<SettingBloc, SettingData>(
                         builder: (context, settingData) {
-                          if (settingData.length > 0) {
-                            _chargingMode = settingData[0];
-                            _batteryChemistry = settingData[1];
-                            _batteryCapacity = settingData[2];
-                            _maxChargingCurrent = settingData[3];
-                            _maxBatteryVoltage = settingData[4];
-                          } else {
-                            _chargingMode = "Normal";
-                            _batteryChemistry = "AGM";
-                          }
+                          if (settingData.fileData.isNotEmpty) {
+                            settingData.fileData.split("\n").forEach((element) {
+                              fileData.add(element);
 
+                              List<String> splitedValues = element.split("=");
+                              _keyOfFileData.add(splitedValues[0]);
+                              _valuesOfFileData.add(splitedValues[1]);
+                            });
+                          }
                           return Form(
                               key: _formKey,
                               child: Column(children: [
                                 DropdownButtonFormField<String>(
-                                  value: _chargingMode ?? 'Normal',
+                                  value: settingData.batteryBrand.isEmpty
+                                      ? _keyOfFileData[0]
+                                      : settingData.batteryBrand,
                                   onChanged: (value) {
-                                    _chargingMode = value;
+                                    _selectedKey = value;
                                   },
-                                  decoration:
-                                      _decoration('Battery Charging Mode'),
-                                  items: <String>[
-                                    'Boost',
-                                    'Normal',
-                                    'Economy',
-                                    'Maintainer'
-                                  ].map<DropdownMenuItem<String>>(
-                                      (String value) {
+                                  decoration: _decoration('Select the brand'),
+                                  items: _keyOfFileData
+                                      .map<DropdownMenuItem<String>>(
+                                          (String value) {
                                     return DropdownMenuItem<String>(
                                       value: value,
                                       child: Text(value),
@@ -119,84 +118,9 @@ class _SettingsState extends State<Settings> {
                                   }).toList(),
                                   validator: (value) {
                                     if (value == null || value.isEmpty) {
-                                      return 'Please select a charging mode';
+                                      return 'Please select battery options.';
                                     }
                                     return null;
-                                  },
-                                ),
-                                _spacing(),
-                                DropdownButtonFormField<String>(
-                                  value: _batteryChemistry ?? "AGM",
-                                  onChanged: (value) {
-                                    _batteryChemistry = value;
-                                  },
-                                  decoration: _decoration('Battery Chemistry'),
-                                  items: <String>[
-                                    "AGM",
-                                    "ATB",
-                                    "GEL",
-                                    "LiTh",
-                                    "WET"
-                                  ].map<DropdownMenuItem<String>>(
-                                      (String value) {
-                                    return DropdownMenuItem<String>(
-                                      value: value,
-                                      child: Text(value),
-                                    );
-                                  }).toList(),
-                                  validator: (value) {
-                                    if (value == null || value.isEmpty) {
-                                      return 'Please select a battery chemistry';
-                                    }
-                                    return null;
-                                  },
-                                ),
-                                _spacing(),
-                                TextFormField(
-                                  keyboardType: TextInputType.number,
-                                  initialValue: _batteryCapacity ?? '',
-                                  decoration:
-                                      _decoration('Battery Capacity (Ah)'),
-                                  validator: (value) {
-                                    if (value == null || value.isEmpty) {
-                                      return 'Please enter a battery capacity';
-                                    }
-                                    return null;
-                                  },
-                                  onChanged: (value) {
-                                    _batteryCapacity = value;
-                                  },
-                                ),
-                                _spacing(),
-                                TextFormField(
-                                  keyboardType: TextInputType.number,
-                                  initialValue: _maxChargingCurrent ?? '',
-                                  decoration: _decoration(
-                                      'Maximum Charging Current (A)'),
-                                  validator: (value) {
-                                    if (value == null || value.isEmpty) {
-                                      return 'Please enter a maximum charging current';
-                                    }
-                                    return null;
-                                  },
-                                  onChanged: (value) {
-                                    _maxChargingCurrent = value;
-                                  },
-                                ),
-                                _spacing(),
-                                TextFormField(
-                                  keyboardType: TextInputType.number,
-                                  initialValue: _maxBatteryVoltage ?? '',
-                                  decoration: _decoration(
-                                      'Maximum Battery Voltage (V)'),
-                                  validator: (value) {
-                                    if (value == null || value.isEmpty) {
-                                      return 'Please enter a maximum battery voltage';
-                                    }
-                                    return null;
-                                  },
-                                  onChanged: (value) {
-                                    _maxBatteryVoltage = value;
                                   },
                                 ),
                                 _spacing(),
@@ -213,16 +137,8 @@ class _SettingsState extends State<Settings> {
                                         borderRadius: BorderRadius.circular(8)),
                                     onPressed: (() {
                                       if (_formKey.currentState!.validate()) {
-                                        _onSaveTapped(
-                                            batteryCapacity: _batteryCapacity!,
-                                            batteryChemistry:
-                                                _batteryChemistry!,
-                                            chargingMode: _chargingMode!,
-                                            maxBatteryVoltage:
-                                                _maxBatteryVoltage!,
-                                            maxChargingCurrent:
-                                                _maxChargingCurrent!,
-                                            characteristic: charData[0]);
+                                        _onSaveTapped(_selectedKey!,
+                                            charData[0], settingData.fileData);
                                       }
                                     }))
                               ]));
@@ -234,65 +150,107 @@ class _SettingsState extends State<Settings> {
         ))));
   }
 
-  void _onSaveTapped(
-      {required String batteryChemistry,
-      required String chargingMode,
-      required String batteryCapacity,
-      required String maxBatteryVoltage,
-      required String maxChargingCurrent,
-      required BluetoothCharacteristic characteristic}) async {
-// loading state on
+  Future<void> _onSaveTapped(String selectedKey,
+      BluetoothCharacteristic charData, String fileData) async {
     context.read<LoadingBloc>().add(Loading(true));
 
-// showing dialog box
     DialogBox(
       context: context,
       Title: "Saving Battery Parameters",
       widget:
           SizedBox(width: 20, height: 40, child: CircularProgressIndicator()),
     );
-
-// sorting and setting data for the bluetooth
-    int _chemVal = items.indexOf(batteryChemistry);
-    int _batteryVal = batteryMode.indexOf(chargingMode);
-    double _batteryCapa = double.parse(batteryCapacity);
-    double _maxVolt = double.parse(maxBatteryVoltage);
-    double _curr = double.parse(maxChargingCurrent);
-
-    double total = _chemVal + _batteryVal + _batteryCapa + _maxVolt + _curr;
-    String incomingData =
-        "C:0:$_chemVal;C:1:$_batteryVal;C:2:$batteryCapacity;C:3:$maxBatteryVoltage;C:4:$maxChargingCurrent;C:50:$total;C:55:0";
-    List<String> elements = incomingData.split(";");
+    int index = _keyOfFileData.indexOf(selectedKey);
+    String data = _valuesOfFileData[index];
+    List<String> elements = data.split(";");
 
 // sending data to bluetooth
-    try {
-      for (int i = 0; i < elements.length; i++) {
-        List<String> elm = elements[i].split(":");
-        String processedData = "${elm[0]}:${elm[1]}:";
-        await characteristic.write(utf8.encode(processedData),
-            withoutResponse: false);
-        await characteristic.write(utf8.encode(elm[2]), withoutResponse: false);
-        await characteristic.write(utf8.encode("\r\n"), withoutResponse: false);
-      }
-      var box = await Hive.openBox(SETUP);
-      var setUpData = [
-        chargingMode,
-        batteryChemistry,
-        batteryCapacity,
-        maxChargingCurrent,
-        maxBatteryVoltage
-      ];
 
-// adding data to hive
-      await box.put(SETUP, setUpData);
-      var dtaa = box.get(SETUP);
-// loader stop
-      context.read<LoadingBloc>().add(Loading(false));
-      context.read<SettingBloc>().add(UpdateSettingData(dtaa));
-      Navigator.pop(context);
-      context.read<TabServiceBloc>().add(UpdateTabList(0));
-    } catch (e) {
-      print(e);
+    for (int i = 0; i < elements.length; i++) {
+      List<String> elm = elements[i].split(":");
+      String processedData = "${elm[0]}:${elm[1]}:";
+      await charData.write(utf8.encode(processedData), withoutResponse: false);
+      await charData.write(utf8.encode(elm[2]), withoutResponse: false);
+      await charData.write(utf8.encode("\r\n"), withoutResponse: false);
     }
+
+    var box = await Hive.openBox(SETUP);
+    var setUpData = [selectedKey, data];
+
+    await box.put(SETUP, setUpData);
+
+    var dtaa = box.get(SETUP);
+    await box.close();
+
+    context.read<SettingBloc>().add(UpdateSettingData(SettingData(
+        fileData: fileData,
+        batteryBrand: selectedKey,
+        batterySavedValue: data)));
+
+    context.read<LoadingBloc>().add(Loading(false));
+    Navigator.pop(context);
+    context.read<TabServiceBloc>().add(UpdateTabList(0));
   }
+
+//   void _onSaveTapped(
+//       {required String batteryChemistry,
+//       required String chargingMode,
+//       required String batteryCapacity,
+//       required String maxBatteryVoltage,
+//       required String maxChargingCurrent,
+//       required BluetoothCharacteristic characteristic}) async {
+// // loading state on
+//     context.read<LoadingBloc>().add(Loading(true));
+
+// // showing dialog box
+//     DialogBox(
+//       context: context,
+//       Title: "Saving Battery Parameters",
+//       widget:
+//           SizedBox(width: 20, height: 40, child: CircularProgressIndicator()),
+//     );
+
+// // sorting and setting data for the bluetooth
+//     int _chemVal = items.indexOf(batteryChemistry);
+//     int _batteryVal = batteryMode.indexOf(chargingMode);
+//     double _batteryCapa = double.parse(batteryCapacity);
+//     double _maxVolt = double.parse(maxBatteryVoltage);
+//     double _curr = double.parse(maxChargingCurrent);
+
+//     double total = _chemVal + _batteryVal + _batteryCapa + _maxVolt + _curr;
+//     String incomingData =
+//         "C:0:$_chemVal;C:1:$_batteryVal;C:2:$batteryCapacity;C:3:$maxBatteryVoltage;C:4:$maxChargingCurrent;C:50:$total;C:55:0";
+//     List<String> elements = incomingData.split(";");
+
+// // sending data to bluetooth
+//     try {
+//       for (int i = 0; i < elements.length; i++) {
+//         List<String> elm = elements[i].split(":");
+//         String processedData = "${elm[0]}:${elm[1]}:";
+//         await characteristic.write(utf8.encode(processedData),
+//             withoutResponse: false);
+//         await characteristic.write(utf8.encode(elm[2]), withoutResponse: false);
+//         await characteristic.write(utf8.encode("\r\n"), withoutResponse: false);
+//       }
+// //       var box = await Hive.openBox(SETUP);
+// //       var setUpData = [
+// //         chargingMode,
+// //         batteryChemistry,
+// //         batteryCapacity,
+// //         maxChargingCurrent,
+// //         maxBatteryVoltage
+// //       ];
+
+// // // adding data to hive
+// //       await box.put(SETUP, setUpData);
+// //      var dtaa = box.get(SETUP);
+// // loader stop
+//       context.read<LoadingBloc>().add(Loading(false));
+//     //  context.read<SettingBloc>().add(UpdateSettingData(dtaa));
+//       Navigator.pop(context);
+//       context.read<TabServiceBloc>().add(UpdateTabList(0));
+//     } catch (e) {
+//       print(e);
+//     }
+//   }
 }
