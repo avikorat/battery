@@ -31,7 +31,7 @@ class _MainScreenState extends State<MainScreen> {
     "Battery Chemistry",
     "Status",
     "Voltage",
-    "Time",
+    "Charging Time",
     "Current"
   ];
 
