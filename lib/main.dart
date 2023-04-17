@@ -1,11 +1,13 @@
 import 'dart:io';
 
+import 'package:animated_splash_screen/animated_splash_screen.dart';
 import 'package:battery/bloc/charastric/charasterics_bloc.dart';
 import 'package:battery/bloc/loading/loading_bloc.dart';
 import 'package:battery/bloc/parse_data/parse_data_bloc.dart';
 import 'package:battery/bloc/service/service_bloc.dart';
 import 'package:battery/bloc/setting/setting_bloc.dart';
 import 'package:battery/bloc/tab/tab_service_bloc.dart';
+import 'package:battery/screen/home_screen.dart';
 import 'package:battery/utils/constants.dart';
 import 'package:battery/utils/routes.dart';
 import 'package:flutter/material.dart';
@@ -38,12 +40,17 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      routes: customRoutes,
       theme: ThemeData(
         primarySwatch: Colors.lightBlue,
       ),
       debugShowCheckedModeBanner: false,
-      initialRoute: '/home',
+      home: AnimatedSplashScreen(
+        backgroundColor: Colors.black,
+        splash: "assets/companyLogo.png",
+        nextScreen: HomeScreen(),
+        centered: true,
+        splashIconSize: 100,
+      ),
     );
   }
 }

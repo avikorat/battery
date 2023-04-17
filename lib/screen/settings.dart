@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'package:battery/bloc/charastric/charasterics_bloc.dart';
@@ -25,7 +26,7 @@ class Settings extends StatefulWidget {
 
 class _SettingsState extends State<Settings> {
   final _formKey = GlobalKey<FormState>();
-
+  late StreamSubscription<List<int>> subscript;
   String? _selectedKey;
 
   // String? _batteryRecovery;
@@ -60,6 +61,12 @@ class _SettingsState extends State<Settings> {
   @override
   void initState() {
     super.initState();
+  }
+
+  @override
+  void dispose() {
+    subscript.cancel();
+    super.dispose();
   }
 
   @override
@@ -180,15 +187,24 @@ class _SettingsState extends State<Settings> {
     await box.put(SETUP, setUpData);
 
     var dtaa = box.get(SETUP);
-    await box.close();
 
+    await box.close();
     context.read<SettingBloc>().add(UpdateSettingData(SettingData(
         fileData: fileData,
         batteryBrand: selectedKey,
         batterySavedValue: data)));
-
-    context.read<LoadingBloc>().add(Loading(false));
-    Navigator.pop(context);
-    context.read<TabServiceBloc>().add(UpdateTabList(0));
+    charData.setNotifyValue(true);
+    subscript = charData.value.listen((event) {
+      List<String> _incomingData = [];
+      _incomingData.add(String.fromCharCodes(event));
+      String _parsedData = _incomingData.join();
+      bool isDataComing = _parsedData.contains("L:");
+      if (isDataComing) {
+        Navigator.pop(context);
+        context.read<TabServiceBloc>().add(UpdateTabList(0));
+        context.read<LoadingBloc>().add(Loading(false));
+        subscript.cancel();
+      }
+    });
   }
 }

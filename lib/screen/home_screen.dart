@@ -31,6 +31,7 @@ class _HomeScreenState extends State<HomeScreen> {
   FlutterBluePlus flutterBlue = FlutterBluePlus.instance;
   BluetoothDevice? device;
   bool connected = false;
+
   List<BluetoothService> services = [];
   List<String> dataFromHive = [];
 
@@ -247,6 +248,33 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  // _scanOffWidget() {
+  //   bool scanOFff = false;
+  //   return Center(
+  //       child: Column(
+  //     mainAxisSize: MainAxisSize.min,
+  //     children: [
+  //       Text(
+  //         "Couldn't locate charger. Please scan for charget again.",
+  //         textAlign: TextAlign.center,
+  //         style: TextStyle(color: Colors.blue),
+  //       ),
+  //       SizedBox(
+  //         height: 20,
+  //       ),
+  //       ElevatedButton(
+  //           style: ElevatedButton.styleFrom(primary: Colors.blueAccent),
+  //           child: Text("Rescan"),
+  //           onPressed: () {
+  //             requestPermissions();
+  //             scanOFff = true;
+  //             setState(() {});
+  //           }),
+  //       scanOFff ? CircularProgressIndicator() : Container()
+  //     ],
+  //   ));
+  // }
+
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<TabServiceBloc, dynamic>(builder: (context, state) {
@@ -260,6 +288,14 @@ class _HomeScreenState extends State<HomeScreen> {
               return _bluetoothOffWidget();
             } else if (snapshot.data == BluetoothState.on) {
               requestPermissions();
+              // Timer.periodic(Duration(seconds: 10), (timer) {
+              //   if (!connected) {
+              //     FlutterBluePlus.instance.stopScan();
+              //     setState(() {
+              //       scanStoped = true;
+              //     });
+              //   }
+              // });
             }
             return snapshot.data == BluetoothState.on
                 ? Scaffold(

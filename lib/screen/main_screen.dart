@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:battery/bloc/charastric/charasterics_bloc.dart';
 import 'package:battery/bloc/loading/loading_bloc.dart';
 import 'package:battery/bloc/loading/loading_event.dart';
@@ -173,6 +175,12 @@ class _MainScreenState extends State<MainScreen> {
         _finalParsedData = [];
       }
     });
+    // if (_finalParsedData.isNotEmpty) {
+    //   if (notificationData.isNotEmpty) {
+    //     notification = false;
+    //     context.read<LoadingBloc>().add(Loading(false));
+    //   }
+    // }
   }
 
 // Fetching data from the bluetooth and passing to decode function
@@ -197,48 +205,13 @@ class _MainScreenState extends State<MainScreen> {
 
       _characteristic!.setNotifyValue(true);
       _characteristic!.value.listen((notificationData) {
-        //  print(String.fromCharCodes(notificationData));
         _decodeData(notificationData);
       });
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-        backgroundColor: Color.fromARGB(96, 228, 227, 227),
-        body: BlocBuilder<ServiceBloc, List<BluetoothService>>(
-            builder: (context, state) {
-          _gettingData(state);
-          return BlocBuilder<ParseDataBloc, List<dynamic>>(
-            builder: (context, data) {
-              return BlocBuilder<LoadingBloc, bool>(
-                builder: (context, loadingState) {
-                  if (loadingState) {
-                    return Center(
-                      child: CircularProgressIndicator(),
-                    );
-                  }
 
-                  return ListView.builder(
-                    itemCount: data.length,
-                    itemBuilder: (BuildContext context, int index) {
-                      return Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: index == 0
-                            ? _gauge(data[index])
-                            : _gridTiles(data, index),
-                      );
-                    },
-                  );
-                },
-              );
-            },
-          );
-        }));
-  }
-
-  // Grid tile widget
+   // Grid tile widget
   Widget _gridTiles(List<dynamic> data, int index) {
     return ClipRRect(
       borderRadius: BorderRadius.circular(16),
@@ -332,4 +305,47 @@ class _MainScreenState extends State<MainScreen> {
           ]),
     );
   }
+
+  _notConnectionWidget(){
+    return Center(
+      child: MaterialButton(onPressed: (){})
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+        backgroundColor: Color.fromARGB(96, 228, 227, 227),
+        body: BlocBuilder<ServiceBloc, List<BluetoothService>>(
+            builder: (context, state) {
+          _gettingData(state);
+          return BlocBuilder<ParseDataBloc, List<dynamic>>(
+            builder: (context, data) {
+              return BlocBuilder<LoadingBloc, bool>(
+                builder: (context, loadingState) {
+                  if (loadingState) {
+                    return Center(
+                      child: CircularProgressIndicator(),
+                    );
+                  }
+                  
+                  return ListView.builder(
+                    itemCount: data.length,
+                    itemBuilder: (BuildContext context, int index) {
+                      return Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: index == 0
+                            ? _gauge(data[index])
+                            : _gridTiles(data, index),
+                      );
+                    },
+                  );
+                },
+              );
+            },
+          );
+        }));
+  }
+
+ 
 }

@@ -12,11 +12,12 @@ DialogBox(
     required Widget widget}) {
   return showDialog<void>(
       context: context,
+      barrierDismissible: false,
       builder: (BuildContext context) {
         return SimpleDialog(
             // key: key,
-            shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16)),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             backgroundColor: Colors.blueAccent,
             children: <Widget>[
               Center(
@@ -30,7 +31,7 @@ DialogBox(
                   ),
                   Text(
                     Title,
-                    style:const TextStyle(color: Colors.white),
+                    style: const TextStyle(color: Colors.white),
                   )
                 ]),
               )
