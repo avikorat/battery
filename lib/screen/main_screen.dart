@@ -46,8 +46,9 @@ class _MainScreenState extends State<MainScreen> {
     String? current;
     String? chargeTime;
     String? batteryCapacity;
-
+    data = data.toSet().toList();
     for (var dataElem in data) {
+
       List<String> values = dataElem.split(":");
 
       if (values.any((element) => element == "")) {
@@ -87,14 +88,11 @@ class _MainScreenState extends State<MainScreen> {
 
 // 3 for battery status
       } else if (values[1] == "3") {
-        if (values[2] == "") {
-          values[2] = "0";
-        }
         if (values[2].isEmpty) {
           print("status issue");
         } else {
-          if (values[2].contains('\n')) {
-            values[2] = values[2].replaceAll('\n', "");
+          if (values[2].contains('')) {
+            values[2] = "0";
           }
           try {
             int _batteryVal = int.parse(values[2]);
@@ -121,7 +119,7 @@ class _MainScreenState extends State<MainScreen> {
 // 7 for voltage
       } else if (values[1] == "7") {
         try {
-          if (values[2] == "") {
+          if (values[2].contains("")) {
             values[2] = "0";
           }
           int _voltageFlag = int.parse(values[2]);

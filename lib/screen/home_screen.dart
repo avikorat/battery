@@ -31,7 +31,7 @@ class _HomeScreenState extends State<HomeScreen> {
   FlutterBluePlus flutterBlue = FlutterBluePlus.instance;
   BluetoothDevice? device;
   bool connected = false;
-
+  bool scanStoped = false;
   List<BluetoothService> services = [];
   List<String> dataFromHive = [];
 
@@ -248,32 +248,42 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // _scanOffWidget() {
-  //   bool scanOFff = false;
-  //   return Center(
-  //       child: Column(
-  //     mainAxisSize: MainAxisSize.min,
-  //     children: [
-  //       Text(
-  //         "Couldn't locate charger. Please scan for charget again.",
-  //         textAlign: TextAlign.center,
-  //         style: TextStyle(color: Colors.blue),
-  //       ),
-  //       SizedBox(
-  //         height: 20,
-  //       ),
-  //       ElevatedButton(
-  //           style: ElevatedButton.styleFrom(primary: Colors.blueAccent),
-  //           child: Text("Rescan"),
-  //           onPressed: () {
-  //             requestPermissions();
-  //             scanOFff = true;
-  //             setState(() {});
-  //           }),
-  //       scanOFff ? CircularProgressIndicator() : Container()
-  //     ],
-  //   ));
-  // }
+  _scanOffWidget() {
+    bool scanOFff = false;
+    return Scaffold(
+      body: Center(
+          child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            "Couldn't locate charger. Please scan for charger again.",
+            textAlign: TextAlign.center,
+            style: TextStyle(color: Colors.black, fontSize: 20),
+            
+          ),
+          SizedBox(
+            height: 40,
+          ),
+          ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                  primary: Colors.blueAccent,
+                  maximumSize: Size(150, 70),
+                  minimumSize: Size(125, 50)),
+              child: Text(
+                "Rescan",
+                style: TextStyle(color: Colors.white, fontSize: 20),
+              ),
+              onPressed: () {
+                requestPermissions();
+                scanOFff = true;
+                scanStoped = false;
+                setState(() {});
+              }),
+          scanOFff ? CircularProgressIndicator() : Container()
+        ],
+      )),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -287,21 +297,23 @@ class _HomeScreenState extends State<HomeScreen> {
               connected = false;
               return _bluetoothOffWidget();
             } else if (snapshot.data == BluetoothState.on) {
-              requestPermissions();
-              // Timer.periodic(Duration(seconds: 10), (timer) {
-              //   if (!connected) {
-              //     FlutterBluePlus.instance.stopScan();
-              //     setState(() {
-              //       scanStoped = true;
-              //     });
-              //   }
-              // });
+              if (!scanStoped) requestPermissions();
+              Timer.periodic(Duration(seconds: 10), (timer) {
+                if (!connected) {
+                  // FlutterBluePlus.instance.stopScan();
+                  setState(() {
+                    scanStoped = true;
+                  });
+                }
+              });
             }
             return snapshot.data == BluetoothState.on
-                ? Scaffold(
-                    body: _pageNo[state],
-                    bottomNavigationBar: _bottomBar(state),
-                  )
+                ? scanStoped
+                    ? _scanOffWidget()
+                    : Scaffold(
+                        body: _pageNo[state],
+                        bottomNavigationBar: _bottomBar(state),
+                      )
                 : Scaffold(
                     body: Container(),
                   );
