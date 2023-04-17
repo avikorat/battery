@@ -58,6 +58,9 @@ class _MainScreenState extends State<MainScreen> {
       if (values.length < 3) {
         print("issue");
       } else if (values[1] == "1") {
+        if (values[2] == "") {
+          values[2] = "0";
+        }
         int _chem = int.parse(values[2]);
         if (_chem == 0) {
           chemistryValue = "AGM";
@@ -73,6 +76,9 @@ class _MainScreenState extends State<MainScreen> {
 
 // 2 for charge time
       } else if (values[1] == "2") {
+        if (values[2] == "") {
+          values[2] = "0";
+        }
         int _chargeTimeFlag = int.parse(values[2]);
         int _hours = (_chargeTimeFlag / 60).toInt();
         int _mins = (_chargeTimeFlag % 60).toInt();
@@ -81,6 +87,9 @@ class _MainScreenState extends State<MainScreen> {
 
 // 3 for battery status
       } else if (values[1] == "3") {
+        if (values[2] == "") {
+          values[2] = "0";
+        }
         if (values[2].isEmpty) {
           print("status issue");
         } else {
@@ -103,12 +112,18 @@ class _MainScreenState extends State<MainScreen> {
 
 // 8 for current
       } else if (values[1] == "8") {
+        if (values[2] == "") {
+          values[2] = "0";
+        }
         int _currentFlag = int.parse(values[2]);
         current = "${_currentFlag / 100} Amp";
 
 // 7 for voltage
       } else if (values[1] == "7") {
         try {
+          if (values[2] == "") {
+            values[2] = "0";
+          }
           int _voltageFlag = int.parse(values[2]);
           if (_voltageFlag == 0) {
             voltage = "0.00";
@@ -122,6 +137,9 @@ class _MainScreenState extends State<MainScreen> {
 // 21 for battery capacity
       } else if (values[1] == '21') {
         try {
+          if (values[2] == "") {
+            values[2] = "0";
+          }
           int _batteryCapacity = int.parse(values[2]);
           if (_batteryCapacity == 0) {
             batteryCapacity = "0.00";
@@ -210,8 +228,7 @@ class _MainScreenState extends State<MainScreen> {
     }
   }
 
-
-   // Grid tile widget
+  // Grid tile widget
   Widget _gridTiles(List<dynamic> data, int index) {
     return ClipRRect(
       borderRadius: BorderRadius.circular(16),
@@ -306,10 +323,8 @@ class _MainScreenState extends State<MainScreen> {
     );
   }
 
-  _notConnectionWidget(){
-    return Center(
-      child: MaterialButton(onPressed: (){})
-    );
+  _notConnectionWidget() {
+    return Center(child: MaterialButton(onPressed: () {}));
   }
 
   @override
@@ -328,7 +343,7 @@ class _MainScreenState extends State<MainScreen> {
                       child: CircularProgressIndicator(),
                     );
                   }
-                  
+
                   return ListView.builder(
                     itemCount: data.length,
                     itemBuilder: (BuildContext context, int index) {
@@ -346,6 +361,4 @@ class _MainScreenState extends State<MainScreen> {
           );
         }));
   }
-
- 
 }
