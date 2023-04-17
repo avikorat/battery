@@ -48,9 +48,9 @@ class _MainScreenState extends State<MainScreen> {
     String? batteryCapacity;
     data = data.toSet().toList();
     for (var dataElem in data) {
-
+      dataElem = dataElem.replaceAll("\n", "");
       List<String> values = dataElem.split(":");
-
+      
       if (values.any((element) => element == "")) {
         int index = values.indexOf("");
         values[index] = "0";
@@ -91,9 +91,6 @@ class _MainScreenState extends State<MainScreen> {
         if (values[2].isEmpty) {
           print("status issue");
         } else {
-          if (values[2].contains('')) {
-            values[2] = "0";
-          }
           try {
             int _batteryVal = int.parse(values[2]);
             if (_batteryVal == 0) {
@@ -110,18 +107,12 @@ class _MainScreenState extends State<MainScreen> {
 
 // 8 for current
       } else if (values[1] == "8") {
-        if (values[2] == "") {
-          values[2] = "0";
-        }
         int _currentFlag = int.parse(values[2]);
         current = "${_currentFlag / 100} Amp";
 
 // 7 for voltage
       } else if (values[1] == "7") {
         try {
-          if (values[2].contains("")) {
-            values[2] = "0";
-          }
           int _voltageFlag = int.parse(values[2]);
           if (_voltageFlag == 0) {
             voltage = "0.00";
@@ -218,8 +209,11 @@ class _MainScreenState extends State<MainScreen> {
           }
         },
       );
+      if (!notification) {
+        _characteristic!.setNotifyValue(true);
+        notification = false;
+      }
 
-      _characteristic!.setNotifyValue(true);
       _characteristic!.value.listen((notificationData) {
         _decodeData(notificationData);
       });

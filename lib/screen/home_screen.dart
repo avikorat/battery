@@ -170,7 +170,7 @@ class _HomeScreenState extends State<HomeScreen> {
       try {
         await flutterBlue.stopScan();
 
-        flutterBlue.scan(timeout: const Duration(seconds: 6)).listen((event) {
+        flutterBlue.scan(timeout: const Duration(seconds: 10)).listen((event) {
           if (event.device.id.toString() == deviceId) {
             device = event.device;
             connectDevice();
@@ -298,7 +298,7 @@ class _HomeScreenState extends State<HomeScreen> {
               return _bluetoothOffWidget();
             } else if (snapshot.data == BluetoothState.on) {
               if (!scanStoped) requestPermissions();
-              Timer.periodic(Duration(seconds: 10), (timer) {
+              Timer.periodic(Duration(seconds: 15), (timer) {
                 if (!connected) {
                   // FlutterBluePlus.instance.stopScan();
                   setState(() {

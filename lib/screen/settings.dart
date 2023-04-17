@@ -24,6 +24,7 @@ class Settings extends StatefulWidget {
   State<Settings> createState() => _SettingsState();
 }
 
+
 class _SettingsState extends State<Settings> {
   final _formKey = GlobalKey<FormState>();
   late StreamSubscription<List<int>> subscript;
@@ -167,6 +168,7 @@ class _SettingsState extends State<Settings> {
       widget:
           SizedBox(width: 20, height: 40, child: CircularProgressIndicator()),
     );
+
     int index = _keyOfFileData.indexOf(selectedKey);
     String data = _valuesOfFileData[index];
     List<String> elements = data.split(";");
@@ -194,6 +196,7 @@ class _SettingsState extends State<Settings> {
         batteryBrand: selectedKey,
         batterySavedValue: data)));
     charData.setNotifyValue(true);
+    notification = true;
     subscript = charData.value.listen((event) {
       List<String> _incomingData = [];
       _incomingData.add(String.fromCharCodes(event));
