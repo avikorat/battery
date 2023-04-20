@@ -45,7 +45,7 @@ class MyApp extends StatelessWidget {
       ),
       debugShowCheckedModeBanner: false,
       home: AnimatedSplashScreen(
-        backgroundColor: Colors.black,
+        backgroundColor: Colors.white,
         splash: "assets/companyLogo.png",
         nextScreen: HomeScreen(),
         centered: true,

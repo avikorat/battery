@@ -24,6 +24,7 @@ class MainScreen extends StatefulWidget {
 class _MainScreenState extends State<MainScreen> {
   List<String> _packates = [];
   List<String> _finalParsedData = [];
+  List<String> _finalSortedData = [];
   String _parsedPackates = '';
   BluetoothService? _service;
   BluetoothCharacteristic? _characteristic;
@@ -46,11 +47,13 @@ class _MainScreenState extends State<MainScreen> {
     String? current;
     String? chargeTime;
     String? batteryCapacity;
-    data = data.toSet().toList();
     for (var dataElem in data) {
       dataElem = dataElem.replaceAll("\n", "");
       List<String> values = dataElem.split(":");
-      
+      values[2] = values[2].trim();
+      if (values[2] == "") {
+        values[2] = "0";
+      }
       if (values.any((element) => element == "")) {
         int index = values.indexOf("");
         values[index] = "0";
@@ -59,9 +62,6 @@ class _MainScreenState extends State<MainScreen> {
       if (values.length < 3) {
         print("issue");
       } else if (values[1] == "1") {
-        if (values[2] == "") {
-          values[2] = "0";
-        }
         int _chem = int.parse(values[2]);
         if (_chem == 0) {
           chemistryValue = "AGM";
@@ -77,9 +77,6 @@ class _MainScreenState extends State<MainScreen> {
 
 // 2 for charge time
       } else if (values[1] == "2") {
-        if (values[2] == "") {
-          values[2] = "0";
-        }
         int _chargeTimeFlag = int.parse(values[2]);
         int _hours = (_chargeTimeFlag / 60).toInt();
         int _mins = (_chargeTimeFlag % 60).toInt();
@@ -88,7 +85,7 @@ class _MainScreenState extends State<MainScreen> {
 
 // 3 for battery status
       } else if (values[1] == "3") {
-        if (values[2].isEmpty) {
+        if (values[2] == "") {
           print("status issue");
         } else {
           try {
@@ -126,9 +123,6 @@ class _MainScreenState extends State<MainScreen> {
 // 21 for battery capacity
       } else if (values[1] == '21') {
         try {
-          if (values[2] == "") {
-            values[2] = "0";
-          }
           int _batteryCapacity = int.parse(values[2]);
           if (_batteryCapacity == 0) {
             batteryCapacity = "0.00";
@@ -177,17 +171,19 @@ class _MainScreenState extends State<MainScreen> {
               _finalParsedData.last.contains('L:31'))) {
         List<String> temp = _finalParsedData;
         if (_finalParsedData.length > 5) {
-          _convertDataToModelClass(_finalParsedData);
+          for (int i = 0; i < _finalParsedData.length; i++) {
+            List<String> splittedData = _finalParsedData[i].split(":");
+            if (splittedData.length == 3) {
+              _finalSortedData.add(_finalParsedData[i]);
+            }
+          }
+
+          _convertDataToModelClass(_finalSortedData.toSet().toList());
         }
         _finalParsedData = [];
+        _finalSortedData = [];
       }
     });
-    // if (_finalParsedData.isNotEmpty) {
-    //   if (notificationData.isNotEmpty) {
-    //     notification = false;
-    //     context.read<LoadingBloc>().add(Loading(false));
-    //   }
-    // }
   }
 
 // Fetching data from the bluetooth and passing to decode function

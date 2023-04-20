@@ -181,6 +181,7 @@ class _SettingsState extends State<Settings> {
       await charData.write(utf8.encode(processedData), withoutResponse: false);
       await charData.write(utf8.encode(elm[2]), withoutResponse: false);
       await charData.write(utf8.encode("\r\n"), withoutResponse: false);
+      Future.delayed(Duration(seconds: 1));
     }
 
     var box = await Hive.openBox(SETUP);
