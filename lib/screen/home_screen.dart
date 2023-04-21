@@ -71,6 +71,9 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+
+// Data injection is done from here so make change if data comes from server
+
   readOrWriteData() async {
     final directory = await getApplicationDocumentsDirectory();
     final path = '${directory.path}/profile.txt';
@@ -85,7 +88,7 @@ class _HomeScreenState extends State<HomeScreen> {
           batterySavedValue: dataFromHive.length > 0 ? dataFromHive[1] : '')));
     } else {
       file.writeAsString(
-          "PowerSonic=${PowerSonic}\nDiscover=${Discover}\nRitarPower=${RitarPower}");
+          "Discover - AGM=${Discover}\nExide - GEL=${Excide}\nTrojan - WET=${Trojon}\nLithium =${Lithium}");
       context.read<SettingBloc>().add(UpdateSettingData(exist
           ? SettingData(
               fileData: data,
@@ -93,7 +96,7 @@ class _HomeScreenState extends State<HomeScreen> {
               batterySavedValue: dataFromHive.length > 0 ? dataFromHive[1] : '')
           : SettingData(
               fileData:
-                  "PowerSonic=${PowerSonic}\nDiscover=${Discover}\nRitarPower=${RitarPower}",
+                  "Discover - AGM=${Discover}\nExide - GEL=${Excide}\nTrojan - WET=${Trojon}\nLithium =${Lithium}",
               batteryBrand: '',
               batterySavedValue: '')));
     }
@@ -259,7 +262,6 @@ class _HomeScreenState extends State<HomeScreen> {
             "Couldn't locate charger. Please scan for charger again.",
             textAlign: TextAlign.center,
             style: TextStyle(color: Colors.black, fontSize: 20),
-            
           ),
           SizedBox(
             height: 40,

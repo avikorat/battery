@@ -2,7 +2,7 @@
     package="com.example.battery">
 
    <application
-        android:label="Smart Battery Bar"
+        android:label="Soneil Charger"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

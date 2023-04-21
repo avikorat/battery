@@ -31,11 +31,11 @@ class _MainScreenState extends State<MainScreen> {
 
   final List<String> _names = [
     "Battery Capacity",
-    "Battery Chemistry",
-    "Status",
-    "Voltage",
+    "Battery Type",
+    "Charging Status",
+    "Charging Voltage",
     "Charging Time",
-    "Current"
+    "Charging Current"
   ];
 
 // Parsing data according to the need of the UI and add the stream of data into bloc
@@ -70,7 +70,7 @@ class _MainScreenState extends State<MainScreen> {
         } else if (_chem == 2) {
           chemistryValue = "GEL";
         } else if (_chem == 3) {
-          chemistryValue = "LiTh";
+          chemistryValue = "Lithium";
         } else if (_chem == 4) {
           chemistryValue = "WET";
         }
@@ -260,54 +260,75 @@ class _MainScreenState extends State<MainScreen> {
 
   Widget _gauge(String value) {
     double _convertedVal = double.parse(value);
-    return SizedBox(
-      height: 250,
-      child: SfRadialGauge(
-          enableLoadingAnimation: true,
-          animationDuration: 4500,
-          axes: <RadialAxis>[
-            RadialAxis(minimum: 0, maximum: 100, ranges: <GaugeRange>[
-              GaugeRange(
-                  startValue: 0,
-                  endValue: 25,
-                  color: Colors.red,
-                  startWidth: 10,
-                  endWidth: 10),
-              GaugeRange(
-                  startValue: 25,
-                  endValue: 45,
-                  color: Colors.yellow,
-                  startWidth: 10,
-                  endWidth: 10),
-              GaugeRange(
-                  startValue: 45,
-                  endValue: 70,
-                  color: Colors.orange,
-                  startWidth: 10,
-                  endWidth: 10),
-              GaugeRange(
-                  startValue: 70,
-                  endValue: 100,
-                  color: Colors.green,
-                  startWidth: 10,
-                  endWidth: 10)
-            ], pointers: <GaugePointer>[
-              NeedlePointer(
-                value: _convertedVal,
-                needleColor: Colors.blue,
-                needleLength: 0.6,
-                knobStyle: KnobStyle(color: Colors.blue, knobRadius: 0.05),
-                needleEndWidth: 6,
-              )
-            ], annotations: <GaugeAnnotation>[
-              GaugeAnnotation(
-                  widget: Container(
-                      child: Text(value,
-                          style: TextStyle(fontSize: 20, color: Colors.blue))),
-                  angle: 90,
-                  positionFactor: 0.7)
-            ])
-          ]),
+    int socValue = int.parse(value);
+    return Stack(
+      children: [
+        Center(
+          child: Image.asset("assets/companyLogo.png",
+              opacity: AlwaysStoppedAnimation(0.2),
+              height: 250,
+              width: MediaQuery.of(context).size.width / 3),
+        ),
+        SizedBox(
+          height: 250,
+          child: SfRadialGauge(
+              enableLoadingAnimation: true,
+              animationDuration: 4500,
+              axes: <RadialAxis>[
+                RadialAxis(
+                    minimum: 0,
+                    maximum: 100,
+                    axisLabelStyle: GaugeTextStyle(
+                        fontSize: 10, fontWeight: FontWeight.bold),
+                    showLastLabel: true,
+                    ranges: <GaugeRange>[
+                      GaugeRange(
+                          startValue: 0,
+                          endValue: 25,
+                          color: Colors.red,
+                          startWidth: 10,
+                          endWidth: 10),
+                      GaugeRange(
+                          startValue: 25,
+                          endValue: 45,
+                          color: Colors.yellow,
+                          startWidth: 10,
+                          endWidth: 10),
+                      GaugeRange(
+                          startValue: 45,
+                          endValue: 70,
+                          color: Colors.orange,
+                          startWidth: 10,
+                          endWidth: 10),
+                      GaugeRange(
+                          startValue: 70,
+                          endValue: 100,
+                          color: Colors.green,
+                          startWidth: 10,
+                          endWidth: 10)
+                    ],
+                    pointers: <GaugePointer>[
+                      NeedlePointer(
+                        value: _convertedVal,
+                        needleColor: Colors.blue,
+                        needleLength: 0.6,
+                        knobStyle:
+                            KnobStyle(color: Colors.blue, knobRadius: 0.05),
+                        needleEndWidth: 6,
+                      )
+                    ],
+                    annotations: <GaugeAnnotation>[
+                      GaugeAnnotation(
+                          widget: Container(
+                              child: Text("SOC: $socValue",
+                                  style: TextStyle(
+                                      fontSize: 20, color: Colors.blue))),
+                          angle: 90,
+                          positionFactor: 0.7)
+                    ])
+              ]),
+        ),
+      ],
     );
   }
 
@@ -332,16 +353,25 @@ class _MainScreenState extends State<MainScreen> {
                     );
                   }
 
-                  return ListView.builder(
-                    itemCount: data.length,
-                    itemBuilder: (BuildContext context, int index) {
-                      return Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: index == 0
-                            ? _gauge(data[index])
-                            : _gridTiles(data, index),
-                      );
-                    },
+                  return Column(
+                    children: [
+                      ListView.builder(
+                        itemCount: data.length,
+                        shrinkWrap: true,
+                        itemBuilder: (BuildContext context, int index) {
+                          return Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: index == 0
+                                ? _gauge(data[index])
+                                : _gridTiles(data, index),
+                          );
+                        },
+                      ),
+                      SizedBox(height: 40,),
+                      SizedBox(
+                          width: MediaQuery.of(context).size.width / 1.5,
+                          child: Image.asset("assets/companyLogo.png"))
+                    ],
                   );
                 },
               );

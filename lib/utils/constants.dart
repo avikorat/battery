@@ -4,6 +4,10 @@ const String SETUP = "setUp";
 var BOX;
 bool notification = false;
 
-String PowerSonic = "C:0:4;C:1:0;C:2:51;C:3:1460;C:4:500;C:50:2015;C:55:0";
-String Discover = "C:0:2;C:1:0;C:2:51;C:3:1420;C:4:500;C:50:1973;C:55:0";
-String RitarPower = "C:0:3;C:1:0;C:2:51;C:3:1440;C:4:500;C:50:1994;C:55:0";
+
+// change and make this data dynamic if anything comes from server 
+
+String Discover = "C:0:0;C:1:0;C:2:51;C:3:1420;C:4:500;C:50:1971;C:55:0";
+String Excide = "C:0:2;C:1:0;C:2:51;C:3:1420;C:4:500;C:50:1973;C:55:0";
+String Trojon = "C:0:4;C:1:0;C:2:51;C:3:1420;C:4:500;C:50:1975;C:55:0";
+String Lithium = "C:0:3;C:1:0;C:2:51;C:3:1420;C:4:500;C:50:1974;C:55:0";
