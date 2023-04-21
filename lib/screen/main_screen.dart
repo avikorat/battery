@@ -260,7 +260,7 @@ class _MainScreenState extends State<MainScreen> {
 
   Widget _gauge(String value) {
     double _convertedVal = double.parse(value);
-    int socValue = int.parse(value);
+    int socValue = _convertedVal.toInt();
     return Stack(
       children: [
         Center(
@@ -353,25 +353,27 @@ class _MainScreenState extends State<MainScreen> {
                     );
                   }
 
-                  return Column(
-                    children: [
-                      ListView.builder(
-                        itemCount: data.length,
-                        shrinkWrap: true,
-                        itemBuilder: (BuildContext context, int index) {
-                          return Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: index == 0
-                                ? _gauge(data[index])
-                                : _gridTiles(data, index),
-                          );
-                        },
-                      ),
-                      SizedBox(height: 40,),
-                      SizedBox(
-                          width: MediaQuery.of(context).size.width / 1.5,
-                          child: Image.asset("assets/companyLogo.png"))
-                    ],
+                  return SingleChildScrollView(
+                    child: Column(
+                      children: [
+                        ListView.builder(
+                          itemCount: data.length,
+                          shrinkWrap: true,
+                          itemBuilder: (BuildContext context, int index) {
+                            return Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: index == 0
+                                  ? _gauge(data[index])
+                                  : _gridTiles(data, index),
+                            );
+                          },
+                        ),
+                        SizedBox(height: 35,),
+                        SizedBox(
+                            width: MediaQuery.of(context).size.width / 1.5,
+                            child: Image.asset("assets/companyLogo.png"))
+                      ],
+                    ),
                   );
                 },
               );
