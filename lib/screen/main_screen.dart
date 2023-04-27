@@ -320,7 +320,7 @@ class _MainScreenState extends State<MainScreen> {
                     annotations: <GaugeAnnotation>[
                       GaugeAnnotation(
                           widget: Container(
-                              child: Text("SOC: $socValue",
+                              child: Text("SOC: $socValue %",
                                   style: TextStyle(
                                       fontSize: 20, color: Colors.blue))),
                           angle: 90,
