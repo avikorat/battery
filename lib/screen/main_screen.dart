@@ -47,6 +47,8 @@ class _MainScreenState extends State<MainScreen> {
     String? current;
     String? chargeTime;
     String? batteryCapacity;
+    String tempVolt = "0.00";
+
     for (var dataElem in data) {
       dataElem = dataElem.replaceAll("\n", "");
       List<String> values = dataElem.split(":");
@@ -112,9 +114,10 @@ class _MainScreenState extends State<MainScreen> {
         try {
           int _voltageFlag = int.parse(values[2]);
           if (_voltageFlag == 0) {
-            voltage = "0.00";
+            voltage = tempVolt;
           } else {
             voltage = (_voltageFlag / 100).toString();
+            tempVolt = voltage;
           }
         } catch (e) {
           print(e);
