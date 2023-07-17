@@ -8,3 +8,15 @@ class UpdateSettingData extends SettingEvent {
 
   UpdateSettingData(this.data);
 }
+
+class UploadSettingData extends SettingEvent {
+  String settingData;
+
+  UploadSettingData(this.settingData);
+}
+
+class UpdateOneProfile extends SettingEvent {
+  String settingData;
+
+  UpdateOneProfile(this.settingData);
+}

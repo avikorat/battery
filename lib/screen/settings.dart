@@ -24,7 +24,6 @@ class Settings extends StatefulWidget {
   State<Settings> createState() => _SettingsState();
 }
 
-
 class _SettingsState extends State<Settings> {
   final _formKey = GlobalKey<FormState>();
   late StreamSubscription<List<int>> subscript;
@@ -96,7 +95,13 @@ class _SettingsState extends State<Settings> {
                       )
                     : BlocBuilder<SettingBloc, SettingData>(
                         builder: (context, settingData) {
-                          if (settingData.fileData.isNotEmpty) {
+                          if (settingData.fileData.isEmpty) {
+                            _keyOfFileData = [];
+                            _valuesOfFileData = [];
+                            return Center(
+                                child:
+                                    Text("There is no setting data available"));
+                          } else if (settingData.fileData.isNotEmpty) {
                             settingData.fileData.split("\n").forEach((element) {
                               fileData.add(element);
 
@@ -104,52 +109,57 @@ class _SettingsState extends State<Settings> {
                               _keyOfFileData.add(splitedValues[0]);
                               _valuesOfFileData.add(splitedValues[1]);
                             });
-                          }
-                          return Form(
-                              key: _formKey,
-                              child: Column(children: [
-                                DropdownButtonFormField<String>(
-                                  value: settingData.batteryBrand.isEmpty
-                                      ? _keyOfFileData[0]
-                                      : settingData.batteryBrand,
-                                  onChanged: (value) {
-                                    _selectedKey = value;
-                                  },
-                                  decoration: _decoration('Select the brand'),
-                                  items: _keyOfFileData
-                                      .map<DropdownMenuItem<String>>(
-                                          (String value) {
-                                    return DropdownMenuItem<String>(
-                                      value: value,
-                                      child: Text(value),
-                                    );
-                                  }).toList(),
-                                  validator: (value) {
-                                    if (value == null || value.isEmpty) {
-                                      return 'Please select battery options.';
-                                    }
-                                    return null;
-                                  },
-                                ),
-                                _spacing(),
-                                MaterialButton(
-                                    color: Colors.blue,
-                                    textColor: Colors.white,
-                                    child: Center(
-                                        child: Text(
-                                      "Save",
-                                      style: TextStyle(fontSize: 20),
-                                    )),
-                                    height: 50,
-                                    shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(8)),
-                                    onPressed: (() {
-                                      if (_formKey.currentState!.validate()) {
-                                        _onSaveTapped(_selectedKey!,
-                                            charData[0], settingData.fileData);
+
+                            return Form(
+                                key: _formKey,
+                                child: Column(children: [
+                                  DropdownButtonFormField<String>(
+                                    value: settingData.batteryBrand.isEmpty
+                                        ? _keyOfFileData[0]
+                                        : settingData.batteryBrand,
+                                    onChanged: (value) {
+                                      _selectedKey = value;
+                                    },
+                                    decoration: _decoration('Select the brand'),
+                                    items: _keyOfFileData
+                                        .map<DropdownMenuItem<String>>(
+                                            (String value) {
+                                      return DropdownMenuItem<String>(
+                                        value: value,
+                                        child: Text(value),
+                                      );
+                                    }).toList(),
+                                    validator: (value) {
+                                      if (value == null || value.isEmpty) {
+                                        return 'Please select battery options.';
                                       }
-                                    }))
-                              ]));
+                                      return null;
+                                    },
+                                  ),
+                                  _spacing(),
+                                  MaterialButton(
+                                      color: Colors.blue,
+                                      textColor: Colors.white,
+                                      child: Center(
+                                          child: Text(
+                                        "Save",
+                                        style: TextStyle(fontSize: 20),
+                                      )),
+                                      height: 50,
+                                      shape: RoundedRectangleBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(8)),
+                                      onPressed: (() {
+                                        if (_formKey.currentState!.validate()) {
+                                          _onSaveTapped(
+                                              _selectedKey!,
+                                              charData[0],
+                                              settingData.fileData);
+                                        }
+                                      }))
+                                ]));
+                          }
+                          return Container();
                         },
                       );
               });

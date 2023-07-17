@@ -87,18 +87,18 @@ class _HomeScreenState extends State<HomeScreen> {
           batteryBrand: dataFromHive.length > 0 ? dataFromHive[0] : '',
           batterySavedValue: dataFromHive.length > 0 ? dataFromHive[1] : '')));
     } else {
-      file.writeAsString(
-          "Discover - AGM=${Discover}\nExide - GEL=${Excide}\nTrojan - WET=${Trojon}\nLithium =${Lithium}");
-      context.read<SettingBloc>().add(UpdateSettingData(exist
-          ? SettingData(
-              fileData: data,
-              batteryBrand: dataFromHive.length > 0 ? dataFromHive[0] : '',
-              batterySavedValue: dataFromHive.length > 0 ? dataFromHive[1] : '')
-          : SettingData(
-              fileData:
-                  "Discover - AGM=${Discover}\nExide - GEL=${Excide}\nTrojan - WET=${Trojon}\nLithium =${Lithium}",
-              batteryBrand: '',
-              batterySavedValue: '')));
+      // file.writeAsString(
+      //     "Discover - AGM=${Discover}\nExide - GEL=${Excide}\nTrojan - WET=${Trojon}\nLithium =${Lithium}");
+      // context.read<SettingBloc>().add(UpdateSettingData(exist
+      //     ? SettingData(
+      //         fileData: data,
+      //         batteryBrand: dataFromHive.length > 0 ? dataFromHive[0] : '',
+      //         batterySavedValue: dataFromHive.length > 0 ? dataFromHive[1] : '')
+      //     : SettingData(
+      //         fileData:
+      //             "Discover - AGM=${Discover}\nExide - GEL=${Excide}\nTrojan - WET=${Trojon}\nLithium =${Lithium}",
+      //         batteryBrand: '',
+      //         batterySavedValue: '')));
     }
   }
 

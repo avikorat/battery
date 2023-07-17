@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:battery/bloc/charastric/charasterics_bloc.dart';
 import 'package:battery/bloc/loading/loading_bloc.dart';
@@ -6,9 +7,13 @@ import 'package:battery/bloc/loading/loading_event.dart';
 import 'package:battery/bloc/parse_data/parse_data_bloc.dart';
 import 'package:battery/bloc/parse_data/parse_data_event.dart';
 import 'package:battery/bloc/service/service_bloc.dart';
+import 'package:battery/bloc/setting/setting_bloc.dart';
+import 'package:battery/screen/configuration_screen.dart';
+import 'package:battery/utils/circular_border.dart';
 import 'package:battery/utils/constants.dart';
 import 'package:battery/utils/dialog_utils.dart';
 import 'package:battery/utils/utils.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
@@ -261,6 +266,92 @@ class _MainScreenState extends State<MainScreen> {
     );
   }
 
+  Widget customDialog(onFileSelected) {
+    File? fileSelected;
+    String? fileName;
+    return StatefulBuilder(
+        builder: (BuildContext context, StateSetter setState) {
+      return AlertDialog(
+        title: Text('Upload Configuration file'),
+        actionsAlignment: MainAxisAlignment.spaceEvenly,
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            GestureDetector(
+              onTap: () async {
+                FilePickerResult? result =
+                    await FilePicker.platform.pickFiles(type: FileType.any);
+
+                if (result != null && result.files.isNotEmpty) {
+                  fileSelected = File(result.files.first.path!);
+                  fileName = fileSelected!.path.split('/').last;
+                  setState(
+                    () {},
+                  );
+                }
+              },
+              child: const CircularBorder(
+                color: Colors.blue,
+                size: 60,
+                icon: Icon(Icons.upload),
+              ),
+            ),
+            SizedBox(
+              height: 20,
+            ),
+            Text(fileName ?? ''),
+            SizedBox(
+              height: fileName != null ? 20 : 0,
+            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                ElevatedButton(
+                  child: Text('Upload', style: TextStyle(color: Colors.white)),
+                  onPressed: () async {
+                    onFileSelected(fileSelected);
+                    Navigator.of(context).pop();
+                  },
+                ),
+                ElevatedButton(
+                  child: Text(
+                    'Cancel',
+                    style: TextStyle(color: Colors.white),
+                  ),
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                ),
+              ],
+            ),
+            SizedBox(
+              height: 10,
+            ),
+            GestureDetector(
+              onTap: () {
+                Navigator.of(context).pop();
+                Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => ConfigurationScsreen()));
+              },
+              child: Text(
+                "Add configuration manually.",
+                style: TextStyle(color: Colors.blue, fontSize: 12),
+              ),
+            )
+          ],
+        ),
+      );
+    });
+  }
+
+  void _onFileSelected(File file) async {
+    final contents = await file.readAsString();
+    print(contents);
+    context.read<SettingBloc>().add(UploadSettingData(contents));
+  }
+
   Widget _gauge(String value) {
     double _convertedVal = double.parse(value);
     int socValue = _convertedVal.toInt();
@@ -274,62 +365,72 @@ class _MainScreenState extends State<MainScreen> {
         ),
         SizedBox(
           height: 250,
-          child: SfRadialGauge(
-              enableLoadingAnimation: true,
-              animationDuration: 4500,
-              axes: <RadialAxis>[
-                RadialAxis(
-                    minimum: 0,
-                    maximum: 100,
-                    axisLabelStyle: GaugeTextStyle(
-                        fontSize: 10, fontWeight: FontWeight.bold),
-                    showLastLabel: true,
-                    ranges: <GaugeRange>[
-                      GaugeRange(
-                          startValue: 0,
-                          endValue: 25,
-                          color: Colors.red,
-                          startWidth: 10,
-                          endWidth: 10),
-                      GaugeRange(
-                          startValue: 25,
-                          endValue: 45,
-                          color: Colors.yellow,
-                          startWidth: 10,
-                          endWidth: 10),
-                      GaugeRange(
-                          startValue: 45,
-                          endValue: 70,
-                          color: Colors.orange,
-                          startWidth: 10,
-                          endWidth: 10),
-                      GaugeRange(
-                          startValue: 70,
-                          endValue: 100,
-                          color: Colors.green,
-                          startWidth: 10,
-                          endWidth: 10)
-                    ],
-                    pointers: <GaugePointer>[
-                      NeedlePointer(
-                        value: _convertedVal,
-                        needleColor: Colors.blue,
-                        needleLength: 0.6,
-                        knobStyle:
-                            KnobStyle(color: Colors.blue, knobRadius: 0.05),
-                        needleEndWidth: 6,
-                      )
-                    ],
-                    annotations: <GaugeAnnotation>[
-                      GaugeAnnotation(
-                          widget: Container(
-                              child: Text("SOC: $socValue %",
-                                  style: TextStyle(
-                                      fontSize: 20, color: Colors.blue))),
-                          angle: 90,
-                          positionFactor: 0.7)
-                    ])
-              ]),
+          child: GestureDetector(
+            onLongPress: () {
+              showDialog(
+                context: context,
+                builder: (BuildContext context) {
+                  return customDialog(_onFileSelected);
+                },
+              );
+            },
+            child: SfRadialGauge(
+                enableLoadingAnimation: true,
+                animationDuration: 4500,
+                axes: <RadialAxis>[
+                  RadialAxis(
+                      minimum: 0,
+                      maximum: 100,
+                      axisLabelStyle: GaugeTextStyle(
+                          fontSize: 10, fontWeight: FontWeight.bold),
+                      showLastLabel: true,
+                      ranges: <GaugeRange>[
+                        GaugeRange(
+                            startValue: 0,
+                            endValue: 25,
+                            color: Colors.red,
+                            startWidth: 10,
+                            endWidth: 10),
+                        GaugeRange(
+                            startValue: 25,
+                            endValue: 45,
+                            color: Colors.yellow,
+                            startWidth: 10,
+                            endWidth: 10),
+                        GaugeRange(
+                            startValue: 45,
+                            endValue: 70,
+                            color: Colors.orange,
+                            startWidth: 10,
+                            endWidth: 10),
+                        GaugeRange(
+                            startValue: 70,
+                            endValue: 100,
+                            color: Colors.green,
+                            startWidth: 10,
+                            endWidth: 10)
+                      ],
+                      pointers: <GaugePointer>[
+                        NeedlePointer(
+                          value: _convertedVal,
+                          needleColor: Colors.blue,
+                          needleLength: 0.6,
+                          knobStyle:
+                              KnobStyle(color: Colors.blue, knobRadius: 0.05),
+                          needleEndWidth: 6,
+                        )
+                      ],
+                      annotations: <GaugeAnnotation>[
+                        GaugeAnnotation(
+                            widget: Container(
+                                child: Text("SOC: $socValue %",
+                                    style: TextStyle(
+                                        fontSize: 20, color: Colors.blue))),
+                            angle: 90,
+                            positionFactor: 0.7)
+                      ])
+                ]),
+          ),
         ),
       ],
     );
@@ -371,7 +472,9 @@ class _MainScreenState extends State<MainScreen> {
                             );
                           },
                         ),
-                        SizedBox(height: 35,),
+                        SizedBox(
+                          height: 35,
+                        ),
                         SizedBox(
                             width: MediaQuery.of(context).size.width / 1.5,
                             child: Image.asset("assets/companyLogo.png"))
