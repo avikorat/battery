@@ -26,6 +26,8 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
+String BLUETOOTH_NAME = "";
+
 class _HomeScreenState extends State<HomeScreen> {
   final String deviceId = "20:10:4B:80:64:C5";
   FlutterBluePlus flutterBlue = FlutterBluePlus.instance;
@@ -70,7 +72,6 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
   }
-
 
 // Data injection is done from here so make change if data comes from server
 
@@ -190,6 +191,7 @@ class _HomeScreenState extends State<HomeScreen> {
   void connectDevice() async {
     try {
       var response = await device?.connect();
+      BLUETOOTH_NAME = device!.name;
       flutterBlue.stopScan();
       connected = true;
       discoverServices();

@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:io';
-
 import 'package:battery/bloc/charastric/charasterics_bloc.dart';
 import 'package:battery/bloc/loading/loading_bloc.dart';
 import 'package:battery/bloc/loading/loading_event.dart';
@@ -9,6 +8,7 @@ import 'package:battery/bloc/parse_data/parse_data_event.dart';
 import 'package:battery/bloc/service/service_bloc.dart';
 import 'package:battery/bloc/setting/setting_bloc.dart';
 import 'package:battery/screen/configuration_screen.dart';
+import 'package:battery/screen/home_screen.dart';
 import 'package:battery/utils/circular_border.dart';
 import 'package:battery/utils/constants.dart';
 import 'package:battery/utils/dialog_utils.dart';
@@ -17,6 +17,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
+import 'package:hive/hive.dart';
 import 'package:syncfusion_flutter_gauges/gauges.dart';
 
 class MainScreen extends StatefulWidget {
@@ -30,6 +31,7 @@ class _MainScreenState extends State<MainScreen> {
   List<String> _packates = [];
   List<String> _finalParsedData = [];
   List<String> _finalSortedData = [];
+  List<double> _voltage = [];
   String _parsedPackates = '';
   BluetoothService? _service;
   BluetoothCharacteristic? _characteristic;
@@ -43,16 +45,16 @@ class _MainScreenState extends State<MainScreen> {
     "Charging Current"
   ];
 
+  String? chemistryValue;
+  String? batteryStatus;
+  String? voltage;
+  String? current;
+  String? chargeTime;
+  String? batteryCapacity;
 // Parsing data according to the need of the UI and add the stream of data into bloc
 
   _convertDataToModelClass(List<String> data) {
-    String? chemistryValue;
-    String? batteryStatus;
-    String? voltage;
-    String? current;
-    String? chargeTime;
-    String? batteryCapacity;
-    String tempVolt = "0.00";
+    // String tempVolt = "0.00";
 
     for (var dataElem in data) {
       dataElem = dataElem.replaceAll("\n", "");
@@ -88,7 +90,7 @@ class _MainScreenState extends State<MainScreen> {
         int _hours = (_chargeTimeFlag / 60).toInt();
         int _mins = (_chargeTimeFlag % 60).toInt();
         chargeTime =
-            '${_hours.toString().padLeft(2, '0')}:${_mins.toString().padLeft(2, '0')}';
+            '${_hours.toString().padLeft(2, '0')}:${_mins.toString().padLeft(2, '0')} hh:MM';
 
 // 3 for battery status
       } else if (values[1] == "3") {
@@ -118,11 +120,16 @@ class _MainScreenState extends State<MainScreen> {
       } else if (values[1] == "7") {
         try {
           int _voltageFlag = int.parse(values[2]);
-          if (_voltageFlag == 0) {
-            voltage = tempVolt;
-          } else {
-            voltage = (_voltageFlag / 100).toString();
-            tempVolt = voltage;
+
+          //  voltage = (_voltageFlag / 100).toString();
+          if (_voltageFlag.toInt() != 0) {
+            _voltage.add(_voltageFlag / 100);
+            if (_voltage.length > 5) {
+              _voltage.removeAt(0);
+            }
+            double sum = _voltage.fold(0, (p, c) => p + c);
+            voltage = (sum / 5).toStringAsFixed(2);
+            voltage = "$voltage V";
           }
         } catch (e) {
           print(e);
@@ -146,8 +153,8 @@ class _MainScreenState extends State<MainScreen> {
       batteryCapacity ?? '0.00',
       chemistryValue ?? "",
       batteryStatus ?? "No Battery",
-      voltage ?? "0.00",
-      chargeTime ?? "00:00",
+      voltage ?? "0.00 V",
+      chargeTime ?? "00:00 hh:MM",
       current ?? "0.0 Amp"
     ];
 
@@ -266,6 +273,7 @@ class _MainScreenState extends State<MainScreen> {
     );
   }
 
+// ******************* Dialog of configuration ****************
   Widget customDialog(onFileSelected) {
     File? fileSelected;
     String? fileName;
@@ -286,7 +294,7 @@ class _MainScreenState extends State<MainScreen> {
                   fileSelected = File(result.files.first.path!);
                   fileName = fileSelected!.path.split('/').last;
                   setState(
-                    () {},
+                    () async {},
                   );
                 }
               },
@@ -360,83 +368,92 @@ class _MainScreenState extends State<MainScreen> {
   Widget _gauge(String value) {
     double _convertedVal = double.parse(value);
     int socValue = _convertedVal.toInt();
-    return Stack(
+    return Column(
       children: [
-        Center(
-          child: Image.asset("assets/companyLogo.png",
-              opacity: AlwaysStoppedAnimation(0.2),
+        Stack(
+          children: [
+            Center(
+              child: Image.asset("assets/companyLogo.png",
+                  opacity: AlwaysStoppedAnimation(0.2),
+                  height: 250,
+                  width: MediaQuery.of(context).size.width / 3),
+            ),
+            SizedBox(
               height: 250,
-              width: MediaQuery.of(context).size.width / 3),
-        ),
-        SizedBox(
-          height: 250,
-          child: GestureDetector(
-            onLongPress: () {
-              showDialog(
-                context: context,
-                builder: (BuildContext context) {
-                  return customDialog(_onFileSelected);
+              child: GestureDetector(
+                onLongPress: () {
+                  showDialog(
+                    context: context,
+                    builder: (BuildContext context) {
+                      return customDialog(_onFileSelected);
+                    },
+                  );
                 },
-              );
-            },
-            child: SfRadialGauge(
-                enableLoadingAnimation: true,
-                animationDuration: 4500,
-                axes: <RadialAxis>[
-                  RadialAxis(
-                      minimum: 0,
-                      maximum: 100,
-                      axisLabelStyle: GaugeTextStyle(
-                          fontSize: 10, fontWeight: FontWeight.bold),
-                      showLastLabel: true,
-                      ranges: <GaugeRange>[
-                        GaugeRange(
-                            startValue: 0,
-                            endValue: 25,
-                            color: Colors.red,
-                            startWidth: 10,
-                            endWidth: 10),
-                        GaugeRange(
-                            startValue: 25,
-                            endValue: 45,
-                            color: Colors.yellow,
-                            startWidth: 10,
-                            endWidth: 10),
-                        GaugeRange(
-                            startValue: 45,
-                            endValue: 70,
-                            color: Colors.orange,
-                            startWidth: 10,
-                            endWidth: 10),
-                        GaugeRange(
-                            startValue: 70,
-                            endValue: 100,
-                            color: Colors.green,
-                            startWidth: 10,
-                            endWidth: 10)
-                      ],
-                      pointers: <GaugePointer>[
-                        NeedlePointer(
-                          value: _convertedVal,
-                          needleColor: Colors.blue,
-                          needleLength: 0.6,
-                          knobStyle:
-                              KnobStyle(color: Colors.blue, knobRadius: 0.05),
-                          needleEndWidth: 6,
-                        )
-                      ],
-                      annotations: <GaugeAnnotation>[
-                        GaugeAnnotation(
-                            widget: Container(
-                                child: Text("SOC: $socValue %",
-                                    style: TextStyle(
-                                        fontSize: 20, color: Colors.blue))),
-                            angle: 90,
-                            positionFactor: 0.7)
-                      ])
-                ]),
-          ),
+                child: SfRadialGauge(
+                    enableLoadingAnimation: true,
+                    animationDuration: 4500,
+                    axes: <RadialAxis>[
+                      RadialAxis(
+                          minimum: 0,
+                          maximum: 100,
+                          axisLabelStyle: GaugeTextStyle(
+                              fontSize: 10, fontWeight: FontWeight.bold),
+                          showLastLabel: true,
+                          ranges: <GaugeRange>[
+                            GaugeRange(
+                                startValue: 0,
+                                endValue: 25,
+                                color: Colors.red,
+                                startWidth: 10,
+                                endWidth: 10),
+                            GaugeRange(
+                                startValue: 25,
+                                endValue: 45,
+                                color: Colors.yellow,
+                                startWidth: 10,
+                                endWidth: 10),
+                            GaugeRange(
+                                startValue: 45,
+                                endValue: 70,
+                                color: Colors.orange,
+                                startWidth: 10,
+                                endWidth: 10),
+                            GaugeRange(
+                                startValue: 70,
+                                endValue: 100,
+                                color: Colors.green,
+                                startWidth: 10,
+                                endWidth: 10)
+                          ],
+                          pointers: <GaugePointer>[
+                            NeedlePointer(
+                              value: _convertedVal,
+                              needleColor: Colors.blue,
+                              needleLength: 0.6,
+                              knobStyle: KnobStyle(
+                                  color: Colors.blue, knobRadius: 0.05),
+                              needleEndWidth: 6,
+                            )
+                          ],
+                          annotations: <GaugeAnnotation>[
+                            GaugeAnnotation(
+                                widget: Container(
+                                    child: Text("SOC: $socValue %",
+                                        style: TextStyle(
+                                            fontSize: 20, color: Colors.blue))),
+                                angle: 90,
+                                positionFactor: 0.7)
+                          ])
+                    ]),
+              ),
+            ),
+          ],
         ),
+        Text(
+          "Connected Bluetooth: $BLUETOOTH_NAME",
+          style: TextStyle(
+              color: Colors.blue, fontWeight: FontWeight.bold, fontSize: 20),
+        )
       ],
     );
   }
