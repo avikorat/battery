@@ -170,6 +170,10 @@ class _ConfigurationScsreenState extends State<ConfigurationScsreen> {
                     ),
                     SizedBox(height: 16.0),
                     ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.blue,
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8))),
                       onPressed: () {
                         int current = 0;
                         int voltage = 0;
@@ -197,11 +201,22 @@ class _ConfigurationScsreenState extends State<ConfigurationScsreen> {
                           context
                               .read<SettingBloc>()
                               .add(UpdateOneProfile(interpolationStr));
+                          _profileNameController.clear();
+                          _capacityController.clear();
+                          _voltageController.clear();
+                          _currentController.clear();
+                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                              backgroundColor: Colors.blue,
+                              content: Text(
+                                "Profile saved.",
+                                style: TextStyle(color: Colors.white),
+                              )));
+                          Navigator.pop(context);
                         }
                       },
                       child: Text(
                         'Submit',
-                        style: TextStyle(color: Colors.white),
+                        style: TextStyle(color: Colors.white, fontSize: 20),
                       ),
                     ),
                   ],
@@ -217,6 +232,7 @@ class _ConfigurationScsreenState extends State<ConfigurationScsreen> {
                       children: [
                         ExpansionTile(
                           title: Text("Remove Profile"),
+                          initiallyExpanded: true,
                           children: state.fileData.split('\n').map((element) {
                             final index =
                                 state.fileData.split('\n').indexOf(element);
@@ -236,6 +252,11 @@ class _ConfigurationScsreenState extends State<ConfigurationScsreen> {
                         ),
                         _selectedCheck.any((element) => element == true)
                             ? ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.blue,
+                                    shape: RoundedRectangleBorder(
+                                        borderRadius:
+                                            BorderRadius.circular(8))),
                                 onPressed: () {
                                   List<String> _serviceData =
                                       state.fileData.split('\n');
@@ -253,8 +274,20 @@ class _ConfigurationScsreenState extends State<ConfigurationScsreen> {
                                   context.read<SettingBloc>().add(
                                       UploadSettingData(
                                           _serviceData.join('\n')));
+
+                                  ScaffoldMessenger.of(context)
+                                      .showSnackBar(SnackBar(
+                                          backgroundColor: Colors.red,
+                                          content: Text(
+                                            "Profile deleted.",
+                                            style:
+                                                TextStyle(color: Colors.white),
+                                          )));
+                                  Navigator.pop(context);
                                 },
-                                child: Text("Delete"),
+                                child: Text("Delete",
+                                    style: TextStyle(
+                                        color: Colors.white, fontSize: 20)),
                               )
                             : SizedBox(),
                       ],

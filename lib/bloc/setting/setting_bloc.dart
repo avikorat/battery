@@ -2,7 +2,6 @@ import 'dart:io';
 
 import 'package:battery/bloc/setting/setting_data.dart';
 import 'package:bloc/bloc.dart';
-import 'package:meta/meta.dart';
 import 'package:path_provider/path_provider.dart';
 
 part 'setting_event.dart';

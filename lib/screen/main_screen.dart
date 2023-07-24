@@ -307,6 +307,7 @@ class _MainScreenState extends State<MainScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
                 ElevatedButton(
+                  style: ElevatedButton.styleFrom(backgroundColor: Colors.blue),
                   child: Text('Upload', style: TextStyle(color: Colors.white)),
                   onPressed: () async {
                     onFileSelected(fileSelected);
@@ -314,6 +315,7 @@ class _MainScreenState extends State<MainScreen> {
                   },
                 ),
                 ElevatedButton(
+                  style: ElevatedButton.styleFrom(backgroundColor: Colors.blue),
                   child: Text(
                     'Cancel',
                     style: TextStyle(color: Colors.white),
@@ -336,8 +338,11 @@ class _MainScreenState extends State<MainScreen> {
                         builder: (context) => ConfigurationScsreen()));
               },
               child: Text(
-                "Add configuration manually.",
-                style: TextStyle(color: Colors.blue, fontSize: 12),
+                "Add or Remove configuration",
+                style: TextStyle(
+                    color: Colors.blue,
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold),
               ),
             )
           ],
