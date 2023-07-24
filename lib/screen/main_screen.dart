@@ -294,7 +294,7 @@ class _MainScreenState extends State<MainScreen> {
                   fileSelected = File(result.files.first.path!);
                   fileName = fileSelected!.path.split('/').last;
                   setState(
-                    () async {},
+                    () {},
                   );
                 }
               },
@@ -319,6 +319,14 @@ class _MainScreenState extends State<MainScreen> {
                   child: Text('Upload', style: TextStyle(color: Colors.white)),
                   onPressed: () async {
                     onFileSelected(fileSelected);
+                    dynamic configBox = await Hive.openBox('configBox');
+                    await configBox.delete('configData');
+                    CONFIG_FILE = [
+                      fileSelected!.path.split('/').last,
+                      DateTime.now().toString()
+                    ];
+                    await configBox.put("configData", CONFIG_FILE);
+
                     Navigator.of(context).pop();
                   },
                 ),

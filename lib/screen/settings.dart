@@ -8,6 +8,7 @@ import 'package:battery/bloc/setting/setting_bloc.dart';
 import 'package:battery/bloc/setting/setting_data.dart';
 import 'package:battery/bloc/tab/tab_service_bloc.dart';
 import 'package:battery/bloc/tab/tab_service_events.dart';
+import 'package:battery/screen/home_screen.dart';
 import 'package:battery/utils/constants.dart';
 import 'package:battery/utils/utils.dart';
 
@@ -112,52 +113,105 @@ class _SettingsState extends State<Settings> {
 
                             return Form(
                                 key: _formKey,
-                                child: Column(children: [
-                                  DropdownButtonFormField<String>(
-                                    value: settingData.batteryBrand.isEmpty
-                                        ? _keyOfFileData[0]
-                                        : settingData.batteryBrand,
-                                    onChanged: (value) {
-                                      _selectedKey = value;
-                                    },
-                                    decoration: _decoration('Select the brand'),
-                                    items: _keyOfFileData
-                                        .map<DropdownMenuItem<String>>(
-                                            (String value) {
-                                      return DropdownMenuItem<String>(
-                                        value: value,
-                                        child: Text(value),
-                                      );
-                                    }).toList(),
-                                    validator: (value) {
-                                      if (value == null || value.isEmpty) {
-                                        return 'Please select battery options.';
-                                      }
-                                      return null;
-                                    },
-                                  ),
-                                  _spacing(),
-                                  MaterialButton(
-                                      color: Colors.blue,
-                                      textColor: Colors.white,
-                                      child: Center(
-                                          child: Text(
-                                        "Save",
-                                        style: TextStyle(fontSize: 20),
-                                      )),
-                                      height: 50,
-                                      shape: RoundedRectangleBorder(
-                                          borderRadius:
-                                              BorderRadius.circular(8)),
-                                      onPressed: (() {
-                                        if (_formKey.currentState!.validate()) {
-                                          _onSaveTapped(
-                                              _selectedKey!,
-                                              charData[0],
-                                              settingData.fileData);
-                                        }
-                                      }))
-                                ]));
+                                child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      SizedBox(
+                                        height:
+                                            CONFIG_FILE[0].isNotEmpty ? 16 : 0,
+                                      ),
+                                      CONFIG_FILE[0].isNotEmpty
+                                          ? Text(
+                                              "Saved configuration file details",
+                                              style: TextStyle(
+                                                  color: Colors.blue,
+                                                  fontSize: 20,
+                                                  fontWeight: FontWeight.bold),
+                                            )
+                                          : SizedBox(
+                                              height: 0,
+                                            ),
+                                      SizedBox(
+                                        height:
+                                            CONFIG_FILE[0].isNotEmpty ? 20 : 0,
+                                      ),
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Text(
+                                            CONFIG_FILE[0].isNotEmpty
+                                                ? CONFIG_FILE[0]
+                                                : "",
+                                            style: TextStyle(
+                                                color: Colors.blue,
+                                                fontSize: 20,
+                                                fontWeight: FontWeight.bold),
+                                          ),
+                                          Text(
+                                            CONFIG_FILE[1].isNotEmpty
+                                                ? CONFIG_FILE[1].substring(0,
+                                                    CONFIG_FILE[1].length - 7)
+                                                : "",
+                                            style: TextStyle(
+                                                color: Colors.blue,
+                                                fontSize: 14,
+                                                fontWeight: FontWeight.bold),
+                                          ),
+                                        ],
+                                      ),
+                                      SizedBox(
+                                        height:
+                                            CONFIG_FILE[0].isNotEmpty ? 16 : 0,
+                                      ),
+                                      DropdownButtonFormField<String>(
+                                        value: settingData.batteryBrand.isEmpty
+                                            ? _keyOfFileData[0]
+                                            : settingData.batteryBrand,
+                                        onChanged: (value) {
+                                          _selectedKey = value;
+                                        },
+                                        decoration:
+                                            _decoration('Select the brand'),
+                                        items: _keyOfFileData
+                                            .map<DropdownMenuItem<String>>(
+                                                (String value) {
+                                          return DropdownMenuItem<String>(
+                                            value: value,
+                                            child: Text(value),
+                                          );
+                                        }).toList(),
+                                        validator: (value) {
+                                          if (value == null || value.isEmpty) {
+                                            return 'Please select battery options.';
+                                          }
+                                          return null;
+                                        },
+                                      ),
+                                      _spacing(),
+                                      MaterialButton(
+                                          color: Colors.blue,
+                                          textColor: Colors.white,
+                                          child: Center(
+                                              child: Text(
+                                            "Save",
+                                            style: TextStyle(fontSize: 20),
+                                          )),
+                                          height: 50,
+                                          shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(8)),
+                                          onPressed: (() {
+                                            if (_formKey.currentState!
+                                                .validate()) {
+                                              _onSaveTapped(
+                                                  _selectedKey!,
+                                                  charData[0],
+                                                  settingData.fileData);
+                                            }
+                                          }))
+                                    ]));
                           }
                           return Container();
                         },

@@ -21,6 +21,7 @@ void main() async {
   var path = appDocumentDirectory.path;
   Hive.init(path);
   BOX = await Hive.openBox(SETUP);
+  await Hive.openBox("configBox");
   runApp(MultiBlocProvider(providers: [
     BlocProvider<TabServiceBloc>(
         create: (BuildContext context) => TabServiceBloc()),

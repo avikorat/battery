@@ -27,6 +27,7 @@ class HomeScreen extends StatefulWidget {
 }
 
 String BLUETOOTH_NAME = "";
+dynamic CONFIG_FILE = [];
 
 class _HomeScreenState extends State<HomeScreen> {
   final String deviceId = "20:10:4B:80:64:C5";
@@ -105,8 +106,12 @@ class _HomeScreenState extends State<HomeScreen> {
 
   _fetchingDataFromHive() async {
     var box = await Hive.openBox(SETUP);
+    var configBox = await Hive.openBox("configBox");
     if (box.isNotEmpty) {
       dataFromHive = box.get(SETUP);
+    }
+    if(configBox.isNotEmpty){
+      CONFIG_FILE = configBox.get("configData");
     }
     await box.close();
   }
