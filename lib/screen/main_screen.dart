@@ -19,6 +19,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'package:hive/hive.dart';
 import 'package:syncfusion_flutter_gauges/gauges.dart';
+import 'package:wave/config.dart';
+import 'package:wave/wave.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -380,80 +382,82 @@ class _MainScreenState extends State<MainScreen> {
       children: [
         Stack(
           children: [
-            Center(
-              child: Image.asset("assets/companyLogo.png",
-                  opacity: AlwaysStoppedAnimation(0.2),
-                  height: 250,
-                  width: MediaQuery.of(context).size.width / 3),
-            ),
+            // Center(
+            //   child: Image.asset("assets/companyLogo.png",
+            //       opacity: AlwaysStoppedAnimation(0.2),
+            //       height: 250,
+            //       width: MediaQuery.of(context).size.width / 3),
+            // ),
             SizedBox(
               height: 250,
               child: GestureDetector(
-                onLongPress: () {
-                  showDialog(
-                    context: context,
-                    builder: (BuildContext context) {
-                      return customDialog(_onFileSelected);
-                    },
-                  );
-                },
-                child: SfRadialGauge(
-                    enableLoadingAnimation: true,
-                    animationDuration: 4500,
-                    axes: <RadialAxis>[
-                      RadialAxis(
-                          minimum: 0,
-                          maximum: 100,
-                          axisLabelStyle: GaugeTextStyle(
-                              fontSize: 10, fontWeight: FontWeight.bold),
-                          showLastLabel: true,
-                          ranges: <GaugeRange>[
-                            GaugeRange(
-                                startValue: 0,
-                                endValue: 25,
-                                color: Colors.red,
-                                startWidth: 10,
-                                endWidth: 10),
-                            GaugeRange(
-                                startValue: 25,
-                                endValue: 45,
-                                color: Colors.yellow,
-                                startWidth: 10,
-                                endWidth: 10),
-                            GaugeRange(
-                                startValue: 45,
-                                endValue: 70,
-                                color: Colors.orange,
-                                startWidth: 10,
-                                endWidth: 10),
-                            GaugeRange(
-                                startValue: 70,
-                                endValue: 100,
-                                color: Colors.green,
-                                startWidth: 10,
-                                endWidth: 10)
-                          ],
-                          pointers: <GaugePointer>[
-                            NeedlePointer(
-                              value: _convertedVal,
-                              needleColor: Colors.blue,
-                              needleLength: 0.6,
-                              knobStyle: KnobStyle(
-                                  color: Colors.blue, knobRadius: 0.05),
-                              needleEndWidth: 6,
-                            )
-                          ],
-                          annotations: <GaugeAnnotation>[
-                            GaugeAnnotation(
-                                widget: Container(
-                                    child: Text("SOC: $socValue %",
-                                        style: TextStyle(
-                                            fontSize: 20, color: Colors.blue))),
-                                angle: 90,
-                                positionFactor: 0.7)
-                          ])
-                    ]),
-              ),
+                  onLongPress: () {
+                    showDialog(
+                      context: context,
+                      builder: (BuildContext context) {
+                        return customDialog(_onFileSelected);
+                      },
+                    );
+                  },
+                  child: showUI(_convertedVal)
+                  //showNewStatusUI(_convertedVal)
+                  // SfRadialGauge(
+                  //     enableLoadingAnimation: true,
+                  //     animationDuration: 4500,
+                  //     axes: <RadialAxis>[
+                  //       RadialAxis(
+                  //           minimum: 0,
+                  //           maximum: 100,
+                  //           axisLabelStyle: GaugeTextStyle(
+                  //               fontSize: 10, fontWeight: FontWeight.bold),
+                  //           showLastLabel: true,
+                  //           ranges: <GaugeRange>[
+                  //             GaugeRange(
+                  //                 startValue: 0,
+                  //                 endValue: 25,
+                  //                 color: Colors.red,
+                  //                 startWidth: 10,
+                  //                 endWidth: 10),
+                  //             GaugeRange(
+                  //                 startValue: 25,
+                  //                 endValue: 45,
+                  //                 color: Colors.yellow,
+                  //                 startWidth: 10,
+                  //                 endWidth: 10),
+                  //             GaugeRange(
+                  //                 startValue: 45,
+                  //                 endValue: 70,
+                  //                 color: Colors.orange,
+                  //                 startWidth: 10,
+                  //                 endWidth: 10),
+                  //             GaugeRange(
+                  //                 startValue: 70,
+                  //                 endValue: 100,
+                  //                 color: Colors.green,
+                  //                 startWidth: 10,
+                  //                 endWidth: 10)
+                  //           ],
+                  //           pointers: <GaugePointer>[
+                  //             NeedlePointer(
+                  //               value: _convertedVal,
+                  //               needleColor: Colors.blue,
+                  //               needleLength: 0.6,
+                  //               knobStyle: KnobStyle(
+                  //                   color: Colors.blue, knobRadius: 0.05),
+                  //               needleEndWidth: 6,
+                  //             )
+                  //           ],
+                  //           annotations: <GaugeAnnotation>[
+                  //             GaugeAnnotation(
+                  //                 widget: Container(
+                  //                     child: Text("SOC: $socValue %",
+                  //                         style: TextStyle(
+                  //                             fontSize: 20, color: Colors.blue))),
+                  //                 angle: 90,
+                  //                 positionFactor: 0.7)
+                  //           ])
+                  //     ]),
+                  ),
             ),
           ],
         ),
@@ -466,8 +470,57 @@ class _MainScreenState extends State<MainScreen> {
     );
   }
 
-  _notConnectionWidget() {
-    return Center(child: MaterialButton(onPressed: () {}));
+  showUI(double soc) {
+    if (soc >= 0 && soc < 25) {
+      return showNewStatusUI(Icons.battery_0_bar, Colors.red, 20);
+    } else if (soc >= 25 && soc < 45) {
+      return showNewStatusUI(Icons.battery_2_bar, Colors.yellow, 40);
+    } else if (soc >= 45 && soc < 70) {
+      return showNewStatusUI(Icons.battery_4_bar, Colors.orange, 70);
+    } else if (soc >= 70 && soc <= 100) {
+      return showNewStatusUI(Icons.battery_6_bar, Colors.green, 100);
+    }
+  }
+
+  Widget showNewStatusUI(
+      IconData selectedIcon, Color selectedColor, double waveHeight) {
+    int duration = 5000;
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2),
+      child: Center(
+        child: SizedBox(
+            height: 170,
+            child: Stack(
+              alignment: Alignment.bottomCenter,
+              children: [
+                Icon(
+                  selectedIcon,
+                  //Icons.battery_0_bar,
+                  size: 200,
+                  color: selectedColor,
+                ),
+                SizedBox(
+                  width: 50,
+                  height: waveHeight,
+                  child: WaveWidget(
+                    config: CustomConfig(
+                      colors: [
+                        selectedColor,
+                      ],
+                      durations: [
+                        duration,
+                      ],
+                      heightPercentages: [-0.2],
+                    ),
+                    backgroundColor: Colors.transparent,
+                    size: const Size(double.infinity, double.infinity),
+                    waveAmplitude: 0,
+                  ),
+                ),
+              ],
+            )),
+      ),
+    );
   }
 
   @override

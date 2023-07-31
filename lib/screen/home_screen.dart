@@ -30,13 +30,15 @@ String BLUETOOTH_NAME = "";
 dynamic CONFIG_FILE = [];
 
 class _HomeScreenState extends State<HomeScreen> {
-  final String deviceId = "20:10:4B:80:64:C5";
+  // final String deviceId = "20:10:4B:80:64:C5";
+  final String deviceId = "20:10:4B";
   FlutterBluePlus flutterBlue = FlutterBluePlus.instance;
   BluetoothDevice? device;
   bool connected = false;
   bool scanStoped = false;
   List<BluetoothService> services = [];
   List<String> dataFromHive = [];
+  List<BluetoothDevice> multipleDevices = [];
 
   final _pageNo = [const MainScreen(), const Settings()];
 
@@ -110,7 +112,7 @@ class _HomeScreenState extends State<HomeScreen> {
     if (box.isNotEmpty) {
       dataFromHive = box.get(SETUP);
     }
-    if(configBox.isNotEmpty){
+    if (configBox.isNotEmpty) {
       CONFIG_FILE = configBox.get("configData");
     }
     await box.close();
@@ -179,10 +181,18 @@ class _HomeScreenState extends State<HomeScreen> {
       try {
         await flutterBlue.stopScan();
 
-        flutterBlue.scan(timeout: const Duration(seconds: 10)).listen((event) {
-          if (event.device.id.toString() == deviceId) {
-            device = event.device;
-            connectDevice();
+        flutterBlue
+            .scan(timeout: const Duration(seconds: 10))
+            .listen((event) async {
+          if (event.device.type == BluetoothDeviceType.le) {
+            print(event.device.id);
+            String scannedId = event.device.id.toString();
+
+            if (scannedId.substring(0, 8) == deviceId &&
+                event.device.name.contains("JDY")) {
+              device = event.device;
+              connectDevice();
+            }
           }
         });
       } catch (error) {
