@@ -202,10 +202,10 @@ class _SettingsState extends State<Settings> {
                                           shape: RoundedRectangleBorder(
                                               borderRadius:
                                                   BorderRadius.circular(8)),
-                                          onPressed: (() {
+                                          onPressed: (() async {
                                             if (_formKey.currentState!
                                                 .validate()) {
-                                              _onSaveTapped(
+                                              await _onSaveTapped(
                                                   _selectedKey!,
                                                   charData[0],
                                                   settingData.fileData);
@@ -224,55 +224,104 @@ class _SettingsState extends State<Settings> {
 
   Future<void> _onSaveTapped(String selectedKey,
       BluetoothCharacteristic charData, String fileData) async {
-    context.read<LoadingBloc>().add(Loading(true));
+    try {
+      context.read<LoadingBloc>().add(Loading(true));
 
-    DialogBox(
-      context: context,
-      Title: "Saving Battery Parameters",
-      widget:
-          SizedBox(width: 20, height: 40, child: CircularProgressIndicator()),
-    );
+      DialogBox(
+        context: context,
+        Title: "Saving Battery Parameters",
+        widget:
+            SizedBox(width: 20, height: 40, child: CircularProgressIndicator()),
+      );
 
-    int index = _keyOfFileData.indexOf(selectedKey);
-    String data = _valuesOfFileData[index];
-    List<String> elements = data.split(";");
-
+      int index = _keyOfFileData.indexOf(selectedKey);
+      String data = _valuesOfFileData[index];
+      List<String> elements = data.split(";");
 // sending data to bluetooth
 
-    for (int i = 0; i < elements.length; i++) {
-      List<String> elm = elements[i].split(":");
-      String processedData = "${elm[0]}:${elm[1]}:";
-      await charData.write(utf8.encode(processedData), withoutResponse: false);
-      await charData.write(utf8.encode(elm[2]), withoutResponse: false);
-      await charData.write(utf8.encode("\r\n"), withoutResponse: false);
-      Future.delayed(Duration(seconds: 1));
-    }
-
-    var box = await Hive.openBox(SETUP);
-    var setUpData = [selectedKey, data];
-
-    await box.put(SETUP, setUpData);
-
-    var dtaa = box.get(SETUP);
-
-    await box.close();
-    context.read<SettingBloc>().add(UpdateSettingData(SettingData(
-        fileData: fileData,
-        batteryBrand: selectedKey,
-        batterySavedValue: data)));
-    charData.setNotifyValue(true);
-    notification = true;
-    subscript = charData.value.listen((event) {
-      List<String> _incomingData = [];
-      _incomingData.add(String.fromCharCodes(event));
-      String _parsedData = _incomingData.join();
-      bool isDataComing = _parsedData.contains("L:");
-      if (isDataComing) {
-        Navigator.pop(context);
-        context.read<TabServiceBloc>().add(UpdateTabList(0));
-        context.read<LoadingBloc>().add(Loading(false));
-        subscript.cancel();
+      for (int i = 0; i < elements.length - 1; i++) {
+        // List<String> elm = elements[i].split(":");
+        print(i);
+        List<int> encodedDataaaaa = utf8.encode('${elements[i]}\r\n');
+        await charData.write(encodedDataaaaa, withoutResponse: false);
+        // String processedData = "${elm[0]}:${elm[1]}:";
+        // print(elements[i]);
+        // print(elm[2]);
+        // print('\r\n');
+        // await charData.write(utf8.encode(processedData), withoutResponse: true);
+        // await charData.write(utf8.encode(elm[2]), withoutResponse: true);
+        // await charData.write(utf8.encode("\r\n"), withoutResponse: true);
+        await Future.delayed(const Duration(milliseconds: 300));
       }
-    });
+
+      var box = await Hive.openBox(SETUP);
+      var setUpData = [selectedKey, data];
+
+      await box.put(SETUP, setUpData);
+
+      var dtaa = box.get(SETUP);
+
+      await box.close();
+      context.read<SettingBloc>().add(UpdateSettingData(SettingData(
+          fileData: fileData,
+          batteryBrand: selectedKey,
+          batterySavedValue: data)));
+      charData.setNotifyValue(true);
+      notification = true;
+      subscript = charData.value.listen((event) {
+        List<String> _incomingData = [];
+        _incomingData.add(String.fromCharCodes(event));
+        String _parsedData = _incomingData.join();
+        bool isDataComing = _parsedData.contains("L:");
+        if (isDataComing) {
+          Navigator.pop(context);
+          context.read<TabServiceBloc>().add(UpdateTabList(0));
+          context.read<LoadingBloc>().add(Loading(false));
+          subscript.cancel();
+        }
+      });
+    } catch (e) {
+      showDialog<void>(
+          context: context,
+          barrierDismissible: false,
+          builder: (BuildContext context) {
+            return SimpleDialog(
+                // key: key,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16)),
+                backgroundColor: Colors.red,
+                children: <Widget>[
+                  Center(
+                    child: Column(children: [
+                      const SizedBox(
+                        height: 10,
+                      ),
+                      const CircularProgressIndicator(color: Colors.white),
+                      const SizedBox(
+                        height: 20,
+                      ),
+                      Text(
+                        "There might be something wrong!!",
+                        style: const TextStyle(color: Colors.white),
+                      ),
+                      ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.white),
+                          child: Text("Clear"),
+                          onPressed: () {
+                            Navigator.pop(context);
+                            Navigator.pop(context);
+                            charData.setNotifyValue(true);
+                            context
+                                .read<TabServiceBloc>()
+                                .add(UpdateTabList(0));
+                            context.read<LoadingBloc>().add(Loading(false));
+                            subscript.cancel();
+                          })
+                    ]),
+                  )
+                ]);
+          });
+    }
   }
 }

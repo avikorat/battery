@@ -166,9 +166,11 @@ class _HomeScreenState extends State<HomeScreen> {
     try {
       List<BluetoothDevice> devices = await flutterBlue.connectedDevices;
       for (BluetoothDevice d in devices) {
-        if (d.id.toString() == deviceId) {
+        if (d.id.toString().substring(0, 8) == deviceId &&
+            d.name.contains("JDY")) {
           device = d;
           connected = true;
+          BLUETOOTH_NAME = d.name;
           discoverServices();
         }
       }
@@ -191,6 +193,7 @@ class _HomeScreenState extends State<HomeScreen> {
             if (scannedId.substring(0, 8) == deviceId &&
                 event.device.name.contains("JDY")) {
               device = event.device;
+              
               connectDevice();
             }
           }

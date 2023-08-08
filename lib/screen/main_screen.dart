@@ -114,12 +114,22 @@ class _MainScreenState extends State<MainScreen> {
         }
 
 // 8 for current
-      } else if (values[1] == "8") {
-        int _currentFlag = int.parse(values[2]);
-        current = "${_currentFlag / 100} Amp";
+      } else if (values[1] == "9") {
+        int _currentFlag = 0;
+        if (values[2].contains("L")) {
+          String tempCurrent = values[2].replaceAll(RegExp(r'[L\n]'), '');
+          _currentFlag = int.parse(tempCurrent);
+        } else {
+          _currentFlag = int.parse(values[2]);
+        }
+        if (_currentFlag == 0) {
+          current = "0 Amp";
+        } else {
+          current = "${_currentFlag / 100} Amp";
+        }
 
 // 7 for voltage
-      } else if (values[1] == "7") {
+      } else if (values[1] == "8") {
         try {
           int _voltageFlag = int.parse(values[2]);
 
@@ -140,7 +150,13 @@ class _MainScreenState extends State<MainScreen> {
 // 21 for battery capacity
       } else if (values[1] == '21') {
         try {
-          int _batteryCapacity = int.parse(values[2]);
+          int _batteryCapacity = 0;
+          if (values[2].contains("L")) {
+            String tempCapacity = values[2].replaceAll(RegExp(r'[L\n]'), '');
+            _batteryCapacity = int.parse(tempCapacity);
+          } else {
+            _batteryCapacity = int.parse(values[2]);
+          }
           if (_batteryCapacity == 0) {
             batteryCapacity = "0.00";
           } else {
@@ -171,7 +187,6 @@ class _MainScreenState extends State<MainScreen> {
   _decodeData(List<int> notificationData) {
     _packates.add(String.fromCharCodes(notificationData));
     _parsedPackates = _packates.join();
-
     _parsedPackates.split('\n').forEach((element) {
       if (element.startsWith('L:')) {
         _finalParsedData.add(element);
