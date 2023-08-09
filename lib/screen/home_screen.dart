@@ -28,6 +28,7 @@ class HomeScreen extends StatefulWidget {
 
 String BLUETOOTH_NAME = "";
 dynamic CONFIG_FILE = [];
+String BLUETOOTH_MAC = "";
 
 class _HomeScreenState extends State<HomeScreen> {
   // final String deviceId = "20:10:4B:80:64:C5";
@@ -171,6 +172,7 @@ class _HomeScreenState extends State<HomeScreen> {
           device = d;
           connected = true;
           BLUETOOTH_NAME = d.name;
+          BLUETOOTH_MAC = d.id.toString();
           discoverServices();
         }
       }
@@ -193,7 +195,7 @@ class _HomeScreenState extends State<HomeScreen> {
             if (scannedId.substring(0, 8) == deviceId &&
                 event.device.name.contains("JDY")) {
               device = event.device;
-              
+
               connectDevice();
             }
           }
@@ -212,6 +214,7 @@ class _HomeScreenState extends State<HomeScreen> {
       BLUETOOTH_NAME = device!.name;
       flutterBlue.stopScan();
       connected = true;
+      BLUETOOTH_MAC = device!.id.toString();
       discoverServices();
     } catch (e) {
       print('Error connecting to device: $e');

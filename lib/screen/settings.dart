@@ -165,6 +165,19 @@ class _SettingsState extends State<Settings> {
                                         height:
                                             CONFIG_FILE[0].isNotEmpty ? 16 : 0,
                                       ),
+                                      Text(
+                                        "Saved Profile: ${settingData.batteryBrand}",
+                                        style: TextStyle(
+                                            color: Colors.blue,
+                                            fontSize: 20,
+                                            fontWeight: FontWeight.bold),
+                                      ),
+                                      SizedBox(
+                                        height:
+                                            settingData.batteryBrand.length > 1
+                                                ? 16
+                                                : 0,
+                                      ),
                                       DropdownButtonFormField<String>(
                                         value: settingData.batteryBrand.isEmpty
                                             ? _keyOfFileData[0]

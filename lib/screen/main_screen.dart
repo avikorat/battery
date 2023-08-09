@@ -34,13 +34,14 @@ class _MainScreenState extends State<MainScreen> {
   List<String> _finalParsedData = [];
   List<String> _finalSortedData = [];
   List<double> _voltage = [];
+  List<int> _current = [];
   String _parsedPackates = '';
   BluetoothService? _service;
   BluetoothCharacteristic? _characteristic;
 
   final List<String> _names = [
     "Battery Capacity",
-    "Battery Type",
+    "Profile",
     "Charging Status",
     "Charging Voltage",
     "Charging Time",
@@ -87,15 +88,15 @@ class _MainScreenState extends State<MainScreen> {
         }
 
 // 2 for charge time
-      } else if (values[1] == "2") {
+      } else if (values[1] == "3") {
         int _chargeTimeFlag = int.parse(values[2]);
         int _hours = (_chargeTimeFlag / 60).toInt();
         int _mins = (_chargeTimeFlag % 60).toInt();
         chargeTime =
-            '${_hours.toString().padLeft(2, '0')}:${_mins.toString().padLeft(2, '0')} hh:MM';
+            '${_hours.toString().padLeft(2, '0')}:${_mins.toString().padLeft(2, '0')} hh:mm';
 
 // 3 for battery status
-      } else if (values[1] == "3") {
+      } else if (values[1] == "4") {
         if (values[2] == "") {
           print("status issue");
         } else {
@@ -116,33 +117,42 @@ class _MainScreenState extends State<MainScreen> {
 // 8 for current
       } else if (values[1] == "9") {
         int _currentFlag = 0;
-        if (values[2].contains("L")) {
-          String tempCurrent = values[2].replaceAll(RegExp(r'[L\n]'), '');
-          _currentFlag = int.parse(tempCurrent);
-        } else {
-          _currentFlag = int.parse(values[2]);
-        }
-        if (_currentFlag == 0) {
-          current = "0 Amp";
-        } else {
-          current = "${_currentFlag / 100} Amp";
+        String currentValue = values[2];
+
+        if (currentValue.contains("L")) {
+          currentValue = currentValue.replaceAll(RegExp(r'[L\n]'), '');
         }
 
-// 7 for voltage
+        _currentFlag = int.parse(currentValue);
+        _current.add(_currentFlag);
+
+        if (_current.length > 5) {
+          _current.removeAt(0); // Remove the oldest value
+        }
+
+        _currentFlag = _current
+            .reduce((maxValue, value) => value > maxValue ? value : maxValue);
+
+        current = _currentFlag == 0 ? "0 Amp" : "${_currentFlag / 100} Amp";
+
+// 8 for voltage
       } else if (values[1] == "8") {
         try {
           int _voltageFlag = int.parse(values[2]);
-
           //  voltage = (_voltageFlag / 100).toString();
-          if (_voltageFlag.toInt() != 0) {
+          if (_voltageFlag / 100 < 70) {
             _voltage.add(_voltageFlag / 100);
-            if (_voltage.length > 5) {
-              _voltage.removeAt(0);
-            }
-            double sum = _voltage.fold(0, (p, c) => p + c);
-            voltage = (sum / 5).toStringAsFixed(2);
-            voltage = "$voltage V";
           }
+
+          if (_voltage.length > 5) {
+            _voltage.removeAt(0);
+            // double sum = _voltage.fold(0, (p, c) => p + c);voltage = (sum / 5).toStringAsFixed(2);
+          }
+          voltage = _voltage
+              .reduce((value, element) => value > element ? value : element)
+              .toStringAsFixed(2);
+
+          voltage = "$voltage V";
         } catch (e) {
           print(e);
         }
@@ -386,7 +396,6 @@ class _MainScreenState extends State<MainScreen> {
 
   void _onFileSelected(File file) async {
     final contents = await file.readAsString();
-    print(contents);
     context.read<SettingBloc>().add(UploadSettingData(contents));
   }
 
