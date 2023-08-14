@@ -10,12 +10,13 @@ import 'package:battery/bloc/tab/tab_service_bloc.dart';
 import 'package:battery/bloc/tab/tab_service_events.dart';
 import 'package:battery/screen/home_screen.dart';
 import 'package:battery/utils/constants.dart';
+import 'package:battery/utils/file_utils.dart';
 import 'package:battery/utils/utils.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
-import 'package:hive/hive.dart';
+// import 'package:hive/hive.dart';
 import 'package:path_provider/path_provider.dart';
 
 class Settings extends StatefulWidget {
@@ -29,7 +30,7 @@ class _SettingsState extends State<Settings> {
   final _formKey = GlobalKey<FormState>();
   late StreamSubscription<List<int>> subscript;
   String? _selectedKey;
-
+  String? fileDataaa = "";
   // String? _batteryRecovery;
 
   List<String> items = <String>["AGM", "ATB", "GEL", "LiTh", "WET"];
@@ -61,6 +62,7 @@ class _SettingsState extends State<Settings> {
 
   @override
   void initState() {
+    context.read<LoadingBloc>().add(Loading(true));
     super.initState();
   }
 
@@ -103,13 +105,29 @@ class _SettingsState extends State<Settings> {
                                 child:
                                     Text("There is no setting data available"));
                           } else if (settingData.fileData.isNotEmpty) {
-                            settingData.fileData.split("\n").forEach((element) {
-                              fileData.add(element);
+                            if (fileDataaa != settingData.fileData) {
+                              fileDataaa = settingData.fileData;
+                              settingData.fileData
+                                  .split("\n")
+                                  .asMap()
+                                  .forEach((index, element) {
+                                if (index == fileDataaa!.split('\n').length) {
+                                  print('');
+                                } else {
+                                  fileData.add(element);
 
-                              List<String> splitedValues = element.split("=");
-                              _keyOfFileData.add(splitedValues[0]);
-                              _valuesOfFileData.add(splitedValues[1]);
-                            });
+                                  List<String> splitedValues =
+                                      element.split("=");
+                                  String key = splitedValues[0].startsWith('_')
+                                      ? splitedValues[0].substring(1)
+                                      : splitedValues[0];
+
+                                  _keyOfFileData.add(key.trim());
+                                  _valuesOfFileData.add(splitedValues[1]);
+                                }
+                              });
+                              context.read<LoadingBloc>().add(Loading(false));
+                            }
 
                             return Form(
                                 key: _formKey,
@@ -257,24 +275,20 @@ class _SettingsState extends State<Settings> {
         print(i);
         List<int> encodedDataaaaa = utf8.encode('${elements[i]}\r\n');
         await charData.write(encodedDataaaaa, withoutResponse: false);
-        // String processedData = "${elm[0]}:${elm[1]}:";
-        // print(elements[i]);
-        // print(elm[2]);
-        // print('\r\n');
-        // await charData.write(utf8.encode(processedData), withoutResponse: true);
-        // await charData.write(utf8.encode(elm[2]), withoutResponse: true);
-        // await charData.write(utf8.encode("\r\n"), withoutResponse: true);
         await Future.delayed(const Duration(milliseconds: 300));
       }
 
-      var box = await Hive.openBox(SETUP);
-      var setUpData = [selectedKey, data];
+      // var box = await Hive.openBox(SETUP);
+      // var setUpData = [selectedKey, data];
 
-      await box.put(SETUP, setUpData);
+      // await box.put(SETUP, setUpData);
 
-      var dtaa = box.get(SETUP);
+      // var dtaa = box.get(SETUP);
 
-      await box.close();
+      // await box.close();
+      fileData = fileData.replaceAll("_", "");
+      fileData = fileData.replaceAll(selectedKey, "_$selectedKey");
+
       context.read<SettingBloc>().add(UpdateSettingData(SettingData(
           fileData: fileData,
           batteryBrand: selectedKey,
@@ -287,6 +301,7 @@ class _SettingsState extends State<Settings> {
         String _parsedData = _incomingData.join();
         bool isDataComing = _parsedData.contains("L:");
         if (isDataComing) {
+          FileUtils().writeToFile(fileData, BLUETOOTH_MAC);
           Navigator.pop(context);
           context.read<TabServiceBloc>().add(UpdateTabList(0));
           context.read<LoadingBloc>().add(Loading(false));

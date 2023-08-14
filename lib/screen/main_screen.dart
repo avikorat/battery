@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 import 'package:battery/bloc/charastric/charasterics_bloc.dart';
 import 'package:battery/bloc/loading/loading_bloc.dart';
@@ -12,13 +13,12 @@ import 'package:battery/screen/home_screen.dart';
 import 'package:battery/utils/circular_border.dart';
 import 'package:battery/utils/constants.dart';
 import 'package:battery/utils/dialog_utils.dart';
+import 'package:battery/utils/file_utils.dart';
 import 'package:battery/utils/utils.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
-import 'package:hive/hive.dart';
-import 'package:syncfusion_flutter_gauges/gauges.dart';
 import 'package:wave/config.dart';
 import 'package:wave/wave.dart';
 
@@ -28,6 +28,8 @@ class MainScreen extends StatefulWidget {
   @override
   State<MainScreen> createState() => _MainScreenState();
 }
+
+bool sendDataExecuted = false;
 
 class _MainScreenState extends State<MainScreen> {
   List<String> _packates = [];
@@ -194,10 +196,13 @@ class _MainScreenState extends State<MainScreen> {
 
   // incoming data parsing function
 
-  _decodeData(List<int> notificationData) {
+  _decodeData(List<int> notificationData) async {
     _packates.add(String.fromCharCodes(notificationData));
     _parsedPackates = _packates.join();
-    _parsedPackates.split('\n').forEach((element) {
+
+    final parsedLines = _parsedPackates.split('\n');
+
+    for (String element in parsedLines) {
       if (element.startsWith('L:')) {
         _finalParsedData.add(element);
         _parsedPackates = "";
@@ -209,8 +214,14 @@ class _MainScreenState extends State<MainScreen> {
       }
 
       if (_finalParsedData.isNotEmpty &&
-          (_finalParsedData.last.contains('L:50') ||
-              _finalParsedData.last.contains('L:31'))) {
+          (_finalParsedData.last.contains('L:50'))) {
+        if (_finalParsedData.last.split(":").last.toString() != CRC &&
+            fileSelectedData != "") {
+          if (!sendDataExecuted) {
+            sendDataExecuted = true;
+            await sendDataToCharger(fileSelectedData, _characteristic!);
+          }
+        }
         List<String> temp = _finalParsedData;
         if (_finalParsedData.length > 5) {
           for (int i = 0; i < _finalParsedData.length; i++) {
@@ -225,7 +236,7 @@ class _MainScreenState extends State<MainScreen> {
         _finalParsedData = [];
         _finalSortedData = [];
       }
-    });
+    }
   }
 
 // Fetching data from the bluetooth and passing to decode function
@@ -256,6 +267,26 @@ class _MainScreenState extends State<MainScreen> {
         _decodeData(notificationData);
       });
     }
+  }
+
+  sendDataToCharger(String data, BluetoothCharacteristic charData) async {
+    List<String> elements = data.split(";");
+    for (int i = 0; i < elements.length - 1; i++) {
+      // List<String> elm = elements[i].split(":");
+      print(i);
+      List<int> encodedDataaaaa = utf8.encode('${elements[i]}\r\n');
+      await charData.write(encodedDataaaaa, withoutResponse: false);
+      await Future.delayed(const Duration(milliseconds: 200));
+    }
+
+    await charData.setNotifyValue(true);
+
+    charData.value.listen((event) {
+      List<String> _incomingData = [];
+      _incomingData.add(String.fromCharCodes(event));
+      String _parsedData = _incomingData.join();
+      bool isDataComing = _parsedData.contains("L:");
+    });
   }
 
   // Grid tile widget
@@ -346,13 +377,17 @@ class _MainScreenState extends State<MainScreen> {
                   child: Text('Upload', style: TextStyle(color: Colors.white)),
                   onPressed: () async {
                     onFileSelected(fileSelected);
-                    dynamic configBox = await Hive.openBox('configBox');
-                    await configBox.delete('configData');
-                    CONFIG_FILE = [
-                      fileSelected!.path.split('/').last,
-                      DateTime.now().toString()
-                    ];
-                    await configBox.put("configData", CONFIG_FILE);
+                    String content = await fileSelected!.readAsString();
+                    String finalFileData =
+                        "$content\n${fileSelected!.path.split('/').last} = ${DateTime.now()}";
+                    FileUtils().writeToFile("_$finalFileData", BLUETOOTH_MAC);
+                    // dynamic configBox = await Hive.openBox('configBox');
+                    // await configBox.delete('configData');
+                    // CONFIG_FILE = [
+                    //   fileSelected!.path.split('/').last,
+                    //   DateTime.now().toString()
+                    // ];
+                    // await configBox.put("configData", CONFIG_FILE);
 
                     Navigator.of(context).pop();
                   },
@@ -396,7 +431,9 @@ class _MainScreenState extends State<MainScreen> {
 
   void _onFileSelected(File file) async {
     final contents = await file.readAsString();
-    context.read<SettingBloc>().add(UploadSettingData(contents));
+    context
+        .read<SettingBloc>()
+        .add(UploadSettingData(contents, file.path.split('/').last));
   }
 
   Widget _gauge(String value) {

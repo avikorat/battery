@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:battery/bloc/setting/setting_data.dart';
+import 'package:battery/screen/home_screen.dart';
 import 'package:bloc/bloc.dart';
 import 'package:path_provider/path_provider.dart';
 
@@ -17,16 +18,20 @@ class SettingBloc extends Bloc<SettingEvent, SettingData> {
     on<UploadSettingData>(
       (event, emit) async {
         final directory = await getApplicationDocumentsDirectory();
-        final path = '${directory.path}/profile.txt';
+        final path = '${directory.path}/config_$BLUETOOTH_MAC.txt';
         final file = File(path);
+        DateTime now = new DateTime.now();
+        DateTime date = new DateTime(now.year, now.month, now.day);
         final exist = await file.exists();
         String data = "";
         if (exist) {
           await file.delete();
         }
-        file.writeAsString(event.settingData);
+        file.writeAsString(
+            "_${event.settingData}");
         emit(SettingData(
-            fileData: event.settingData,
+            fileData:
+                "_${event.settingData}",
             batteryBrand: '',
             batterySavedValue: ''));
       },

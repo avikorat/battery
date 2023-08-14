@@ -12,16 +12,15 @@ import 'package:battery/utils/constants.dart';
 import 'package:battery/utils/routes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:hive/hive.dart';
 import 'package:path_provider/path_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   var appDocumentDirectory = await getApplicationDocumentsDirectory();
   var path = appDocumentDirectory.path;
-  Hive.init(path);
-  BOX = await Hive.openBox(SETUP);
-  await Hive.openBox("configBox");
+  // Hive.init(path);
+  // BOX = await Hive.openBox(SETUP);
+  // await Hive.openBox("configBox");
   runApp(MultiBlocProvider(providers: [
     BlocProvider<TabServiceBloc>(
         create: (BuildContext context) => TabServiceBloc()),

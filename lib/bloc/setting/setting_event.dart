@@ -10,8 +10,9 @@ class UpdateSettingData extends SettingEvent {
 
 class UploadSettingData extends SettingEvent {
   String settingData;
+  String fileName;
 
-  UploadSettingData(this.settingData);
+  UploadSettingData(this.settingData, this.fileName);
 }
 
 class UpdateOneProfile extends SettingEvent {

@@ -271,9 +271,9 @@ class _ConfigurationScsreenState extends State<ConfigurationScsreen> {
                                     _serviceData.removeAt(element);
                                   });
 
-                                  context.read<SettingBloc>().add(
-                                      UploadSettingData(
-                                          _serviceData.join('\n')));
+                                  // context.read<SettingBloc>().add(
+                                  //     UploadSettingData(
+                                  //         _serviceData.join('\n')));
 
                                   ScaffoldMessenger.of(context)
                                       .showSnackBar(SnackBar(

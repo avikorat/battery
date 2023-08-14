@@ -12,10 +12,11 @@ import 'package:battery/screen/main_screen.dart';
 import 'package:battery/screen/settings.dart';
 import 'package:battery/utils/constants.dart';
 import 'package:battery/utils/dialog_utils.dart';
+import 'package:battery/utils/file_utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
-import 'package:hive/hive.dart';
+// import 'package:hive/hive.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 
@@ -29,6 +30,10 @@ class HomeScreen extends StatefulWidget {
 String BLUETOOTH_NAME = "";
 dynamic CONFIG_FILE = [];
 String BLUETOOTH_MAC = "";
+String CRC = "";
+String fileSelectedData = "";
+
+bool is_exist = false;
 
 class _HomeScreenState extends State<HomeScreen> {
   // final String deviceId = "20:10:4B:80:64:C5";
@@ -86,11 +91,11 @@ class _HomeScreenState extends State<HomeScreen> {
     final exist = await file.exists();
     String data = "";
     if (exist) {
-      data = await file.readAsString();
-      context.read<SettingBloc>().add(UpdateSettingData(SettingData(
-          fileData: data,
-          batteryBrand: dataFromHive.length > 0 ? dataFromHive[0] : '',
-          batterySavedValue: dataFromHive.length > 0 ? dataFromHive[1] : '')));
+      // data = await file.readAsString();
+      // context.read<SettingBloc>().add(UpdateSettingData(SettingData(
+      //     fileData: data,
+      //     batteryBrand: dataFromHive.length > 0 ? dataFromHive[0] : '',
+      //     batterySavedValue: dataFromHive.length > 0 ? dataFromHive[1] : '')));
     } else {
       // file.writeAsString(
       //     "Discover - AGM=${Discover}\nExide - GEL=${Excide}\nTrojan - WET=${Trojon}\nLithium =${Lithium}");
@@ -107,17 +112,17 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  _fetchingDataFromHive() async {
-    var box = await Hive.openBox(SETUP);
-    var configBox = await Hive.openBox("configBox");
-    if (box.isNotEmpty) {
-      dataFromHive = box.get(SETUP);
-    }
-    if (configBox.isNotEmpty) {
-      CONFIG_FILE = configBox.get("configData");
-    }
-    await box.close();
-  }
+  // _fetchingDataFromHive() async {
+  //   // var box = await Hive.openBox(SETUP);
+  //   // var configBox = await Hive.openBox("configBox");
+  //   // if (box.isNotEmpty) {
+  //   //   dataFromHive = box.get(SETUP);
+  //   // }
+  //   // if (configBox.isNotEmpty) {
+  //   //   CONFIG_FILE = configBox.get("configData");
+  //   // }
+  //   // await box.close();
+  // }
 
   void showToast(String message) {
     ScaffoldMessenger.of(context)
@@ -173,6 +178,8 @@ class _HomeScreenState extends State<HomeScreen> {
           connected = true;
           BLUETOOTH_NAME = d.name;
           BLUETOOTH_MAC = d.id.toString();
+
+          _readData();
           discoverServices();
         }
       }
@@ -195,7 +202,6 @@ class _HomeScreenState extends State<HomeScreen> {
             if (scannedId.substring(0, 8) == deviceId &&
                 event.device.name.contains("JDY")) {
               device = event.device;
-
               connectDevice();
             }
           }
@@ -215,6 +221,8 @@ class _HomeScreenState extends State<HomeScreen> {
       flutterBlue.stopScan();
       connected = true;
       BLUETOOTH_MAC = device!.id.toString();
+
+      _readData();
       discoverServices();
     } catch (e) {
       print('Error connecting to device: $e');
@@ -236,8 +244,9 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     context.read<LoadingBloc>().add(Loading(true));
-    _fetchingDataFromHive();
-    readOrWriteData();
+    //_fetchingDataFromHive();
+
+    //  readOrWriteData();
     super.initState();
   }
 
@@ -272,6 +281,47 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ),
     );
+  }
+
+  _readData() async {
+    is_exist = await FileUtils().searchFile(BLUETOOTH_MAC);
+    if (is_exist) {
+      String fileData = await FileUtils().readFile(BLUETOOTH_MAC);
+      String brandName = fileData
+          .split('\n')
+          .take(fileData.split('\n').length - 1)
+          .where((element) => element.startsWith('_'))
+          .first
+          .split("=")[0]
+          .substring(1)
+          .trim();
+      String brandValue = fileData
+          .split('\n')
+          .take(fileData.split('\n').length - 1)
+          .where((element) => element.startsWith('_'))
+          .first
+          .split("=")[1];
+      CRC = fileData
+          .split('\n')
+          .take(fileData.split('\n').length - 1)
+          .where((element) => element.startsWith('_'))
+          .first
+          .split(';')
+          .where((element) => element.startsWith('C:50:'))
+          .first
+          .split(":")[2];
+      fileSelectedData = fileData
+          .split('\n')
+          .take(fileData.split('\n').length - 1)
+          .where((element) => element.startsWith('_'))
+          .first
+          .split("=")[1];
+      CONFIG_FILE = fileData.split('\n').last.split("=");
+      context.read<SettingBloc>().add(UpdateSettingData(SettingData(
+          fileData: fileData,
+          batteryBrand: brandName,
+          batterySavedValue: brandValue)));
+    }
   }
 
   _scanOffWidget() {
@@ -323,7 +373,7 @@ class _HomeScreenState extends State<HomeScreen> {
               return _bluetoothOffWidget();
             } else if (snapshot.data == BluetoothState.on) {
               if (!scanStoped) requestPermissions();
-              Timer.periodic(Duration(seconds: 15), (timer) {
+              Timer.periodic(Duration(seconds: 20), (timer) {
                 if (!connected) {
                   // FlutterBluePlus.instance.stopScan();
                   setState(() {

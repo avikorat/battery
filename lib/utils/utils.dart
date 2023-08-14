@@ -1,6 +1,10 @@
 // ignore_for_file: non_constant_identifier_names
 
+import 'dart:convert';
+import 'package:battery/bloc/loading/loading_event.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_blue_plus/flutter_blue_plus.dart';
+import '../bloc/loading/loading_bloc.dart';
 
 String convertUUID(String data) {
   return '0x${data.toUpperCase().substring(4, 8)}';
