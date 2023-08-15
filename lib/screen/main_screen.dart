@@ -60,6 +60,7 @@ class _MainScreenState extends State<MainScreen> {
 
   _convertDataToModelClass(List<String> data) {
     // String tempVolt = "0.00";
+    final validCharacters = RegExp(r'^[a-zA-Z0-9]+$');
 
     for (var dataElem in data) {
       dataElem = dataElem.replaceAll("\n", "");
@@ -91,7 +92,9 @@ class _MainScreenState extends State<MainScreen> {
 
 // 2 for charge time
       } else if (values[1] == "3") {
-        int _chargeTimeFlag = int.parse(values[2]);
+        int _chargeTimeFlag = 0;
+        values[2].replaceAll(RegExp(r'[^0-9]'), '');
+
         int _hours = (_chargeTimeFlag / 60).toInt();
         int _mins = (_chargeTimeFlag % 60).toInt();
         chargeTime =
@@ -119,7 +122,7 @@ class _MainScreenState extends State<MainScreen> {
 // 8 for current
       } else if (values[1] == "9") {
         int _currentFlag = 0;
-        String currentValue = values[2];
+        String currentValue = values[2].replaceAll(RegExp(r'[^0-9]'), '');
 
         if (currentValue.contains("L")) {
           currentValue = currentValue.replaceAll(RegExp(r'[L\n]'), '');
@@ -135,7 +138,7 @@ class _MainScreenState extends State<MainScreen> {
         _currentFlag = _current
             .reduce((maxValue, value) => value > maxValue ? value : maxValue);
 
-        current = _currentFlag == 0 ? "0 Amp" : "${_currentFlag / 100} Amp";
+        current = _currentFlag == 0 ? "0 A" : "${_currentFlag / 100} A";
 
 // 8 for voltage
       } else if (values[1] == "8") {
@@ -181,11 +184,11 @@ class _MainScreenState extends State<MainScreen> {
     }
     List<String> d = [
       batteryCapacity ?? '0.00',
-      chemistryValue ?? "",
+      BRANDNAME,
       batteryStatus ?? "No Battery",
       voltage ?? "0.00 V",
-      chargeTime ?? "00:00 hh:MM",
-      current ?? "0.0 Amp"
+      chargeTime ?? "00:00 hh:mm",
+      current ?? "0.0 A"
     ];
 
     if (mounted) {
@@ -219,6 +222,7 @@ class _MainScreenState extends State<MainScreen> {
             fileSelectedData != "") {
           if (!sendDataExecuted) {
             sendDataExecuted = true;
+
             await sendDataToCharger(fileSelectedData, _characteristic!);
           }
         }
@@ -376,11 +380,16 @@ class _MainScreenState extends State<MainScreen> {
                   style: ElevatedButton.styleFrom(backgroundColor: Colors.blue),
                   child: Text('Upload', style: TextStyle(color: Colors.white)),
                   onPressed: () async {
+                    context.read<LoadingBloc>().add(Loading(true));
                     onFileSelected(fileSelected);
                     String content = await fileSelected!.readAsString();
                     String finalFileData =
-                        "$content\n${fileSelected!.path.split('/').last} = ${DateTime.now()}";
-                    FileUtils().writeToFile("_$finalFileData", BLUETOOTH_MAC);
+                        "$content \n${fileSelected!.path.split('/').last} = ${DateTime.now()}";
+                    await FileUtils()
+                        .writeToFile("_$finalFileData", BLUETOOTH_MAC);
+
+                    BRANDNAME = content.split("=")[0];
+                    sendDataExecuted = false;
                     // dynamic configBox = await Hive.openBox('configBox');
                     // await configBox.delete('configData');
                     // CONFIG_FILE = [
@@ -388,8 +397,10 @@ class _MainScreenState extends State<MainScreen> {
                     //   DateTime.now().toString()
                     // ];
                     // await configBox.put("configData", CONFIG_FILE);
+                    
 
                     Navigator.of(context).pop();
+                    context.read<LoadingBloc>().add(Loading(false));
                   },
                 ),
                 ElevatedButton(
@@ -431,9 +442,9 @@ class _MainScreenState extends State<MainScreen> {
 
   void _onFileSelected(File file) async {
     final contents = await file.readAsString();
-    context
-        .read<SettingBloc>()
-        .add(UploadSettingData(contents, file.path.split('/').last));
+    context.read<SettingBloc>().add(UploadSettingData(
+        "$contents\n${file.path.split('/').last}=${DateTime.now()}",
+        file.path.split('/').last));
   }
 
   Widget _gauge(String value) {
@@ -523,7 +534,7 @@ class _MainScreenState extends State<MainScreen> {
           ],
         ),
         Text(
-          "Connected Bluetooth: $BLUETOOTH_NAME",
+          "Connected Bluetooth: 2406SRD${BLUETOOTH_MAC.substring(BLUETOOTH_MAC.length -5)}",
           style: TextStyle(
               color: Colors.blue, fontWeight: FontWeight.bold, fontSize: 20),
         )
@@ -612,7 +623,9 @@ class _MainScreenState extends State<MainScreen> {
                               padding: const EdgeInsets.all(8.0),
                               child: index == 0
                                   ? _gauge(data[index])
-                                  : _gridTiles(data, index),
+                                  : index == 1 && data[1].isEmpty
+                                      ? Container()
+                                      : _gridTiles(data, index),
                             );
                           },
                         ),

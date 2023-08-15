@@ -106,13 +106,17 @@ class _SettingsState extends State<Settings> {
                                     Text("There is no setting data available"));
                           } else if (settingData.fileData.isNotEmpty) {
                             if (fileDataaa != settingData.fileData) {
+                              fileDataaa = "";
                               fileDataaa = settingData.fileData;
+                              _keyOfFileData = [];
+                              _valuesOfFileData = [];
                               settingData.fileData
                                   .split("\n")
                                   .asMap()
                                   .forEach((index, element) {
-                                if (index == fileDataaa!.split('\n').length) {
-                                  print('');
+                                if (index ==
+                                    fileDataaa!.split('\n').length - 1) {
+                                  CONFIG_FILE = element.split("=");
                                 } else {
                                   fileData.add(element);
 
@@ -170,7 +174,7 @@ class _SettingsState extends State<Settings> {
                                           Text(
                                             CONFIG_FILE[1].isNotEmpty
                                                 ? CONFIG_FILE[1].substring(0,
-                                                    CONFIG_FILE[1].length - 7)
+                                                    CONFIG_FILE[1].length - 10)
                                                 : "",
                                             style: TextStyle(
                                                 color: Colors.blue,
@@ -302,6 +306,7 @@ class _SettingsState extends State<Settings> {
         bool isDataComing = _parsedData.contains("L:");
         if (isDataComing) {
           FileUtils().writeToFile(fileData, BLUETOOTH_MAC);
+          BRANDNAME = selectedKey;
           Navigator.pop(context);
           context.read<TabServiceBloc>().add(UpdateTabList(0));
           context.read<LoadingBloc>().add(Loading(false));

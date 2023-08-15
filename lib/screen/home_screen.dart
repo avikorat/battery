@@ -30,6 +30,7 @@ class HomeScreen extends StatefulWidget {
 String BLUETOOTH_NAME = "";
 dynamic CONFIG_FILE = [];
 String BLUETOOTH_MAC = "";
+String BRANDNAME = "";
 String CRC = "";
 String fileSelectedData = "";
 
@@ -295,6 +296,7 @@ class _HomeScreenState extends State<HomeScreen> {
           .split("=")[0]
           .substring(1)
           .trim();
+      BRANDNAME = brandName;
       String brandValue = fileData
           .split('\n')
           .take(fileData.split('\n').length - 1)
