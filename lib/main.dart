@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:animated_splash_screen/animated_splash_screen.dart';
 import 'package:battery/bloc/charastric/charasterics_bloc.dart';
+import 'package:battery/bloc/connection/connection_bloc.dart';
 import 'package:battery/bloc/loading/loading_bloc.dart';
 import 'package:battery/bloc/parse_data/parse_data_bloc.dart';
 import 'package:battery/bloc/service/service_bloc.dart';
@@ -31,6 +32,7 @@ void main() async {
     BlocProvider<CharastericsBloc>(
         create: (BuildContext context) => CharastericsBloc()),
     BlocProvider<SettingBloc>(create: (BuildContext context) => SettingBloc()),
+    BlocProvider<ConnectionBloc>(create: (BuildContext context) => ConnectionBloc()),
   ], child: const MyApp()));
 }
 

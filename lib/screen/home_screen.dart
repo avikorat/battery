@@ -1,5 +1,7 @@
 import 'dart:async';
 import 'dart:io';
+import 'package:battery/bloc/connection/connection_bloc.dart';
+import 'package:battery/bloc/connection/connection_event.dart';
 import 'package:battery/bloc/loading/loading_bloc.dart';
 import 'package:battery/bloc/loading/loading_event.dart';
 import 'package:battery/bloc/service/service_bloc.dart';
@@ -40,11 +42,11 @@ class _HomeScreenState extends State<HomeScreen> {
   // final String deviceId = "20:10:4B:80:64:C5";
   final String deviceId = "20:10:4B";
   FlutterBluePlus flutterBlue = FlutterBluePlus.instance;
-  BluetoothDevice? device;
   bool connected = false;
   bool scanStoped = false;
   List<BluetoothService> services = [];
   List<String> dataFromHive = [];
+  BluetoothDevice? device;
   List<BluetoothDevice> multipleDevices = [];
 
   final _pageNo = [const MainScreen(), const Settings()];
@@ -222,9 +224,9 @@ class _HomeScreenState extends State<HomeScreen> {
       flutterBlue.stopScan();
       connected = true;
       BLUETOOTH_MAC = device!.id.toString();
-
       _readData();
       discoverServices();
+      setState(() {});
     } catch (e) {
       print('Error connecting to device: $e');
       return;
@@ -236,6 +238,7 @@ class _HomeScreenState extends State<HomeScreen> {
   void discoverServices() async {
     try {
       List<BluetoothService> _services = await device!.discoverServices();
+
       context.read<ServiceBloc>().add(UpdateServiceList(_services));
     } catch (e) {
       print('Error discovering services: $e');
@@ -326,7 +329,7 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  _scanOffWidget() {
+  _scanOffWidget(String data) {
     bool scanOFff = false;
     return Scaffold(
       body: Center(
@@ -334,7 +337,7 @@ class _HomeScreenState extends State<HomeScreen> {
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(
-            "Couldn't locate charger. Please scan for charger again.",
+            data,
             textAlign: TextAlign.center,
             style: TextStyle(color: Colors.black, fontSize: 20),
           ),
@@ -380,17 +383,33 @@ class _HomeScreenState extends State<HomeScreen> {
                   // FlutterBluePlus.instance.stopScan();
                   setState(() {
                     scanStoped = true;
+                    isShown = true;
                   });
                 }
               });
             }
             return snapshot.data == BluetoothState.on
                 ? scanStoped
-                    ? _scanOffWidget()
-                    : Scaffold(
-                        body: _pageNo[state],
-                        bottomNavigationBar: _bottomBar(state),
-                      )
+                    ? _scanOffWidget("Couldn't locate charger. Please scan for charger again.")
+                    : StreamBuilder<BluetoothDeviceState>(
+                        stream: device?.state,
+                        builder: (context, snapShot) {
+                          if (snapShot.data == BluetoothDeviceState.connected) {
+                            return Scaffold(
+                              body: _pageNo[state],
+                              bottomNavigationBar: _bottomBar(state),
+                            );
+                          } else if (snapShot.data ==
+                              BluetoothDeviceState.disconnected) {
+                            return _scanOffWidget("Bluetooth is disconnected.");
+                          } else {
+                            return Scaffold(
+                              body: Center(
+                                child: CircularProgressIndicator(),
+                              ),
+                            );
+                          }
+                        })
                 : Scaffold(
                     body: Container(),
                   );

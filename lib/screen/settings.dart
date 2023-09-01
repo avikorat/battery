@@ -143,29 +143,13 @@ class _SettingsState extends State<Settings> {
                                         height:
                                             CONFIG_FILE[0].isNotEmpty ? 16 : 0,
                                       ),
-                                      CONFIG_FILE[0].isNotEmpty
-                                          ? Text(
-                                              "Saved configuration file details",
-                                              style: TextStyle(
-                                                  color: Colors.blue,
-                                                  fontSize: 20,
-                                                  fontWeight: FontWeight.bold),
-                                            )
-                                          : SizedBox(
-                                              height: 0,
-                                            ),
-                                      SizedBox(
-                                        height:
-                                            CONFIG_FILE[0].isNotEmpty ? 20 : 0,
-                                      ),
+                                     
                                       Row(
                                         mainAxisAlignment:
                                             MainAxisAlignment.spaceBetween,
                                         children: [
                                           Text(
-                                            CONFIG_FILE[0].isNotEmpty
-                                                ? CONFIG_FILE[0]
-                                                : "",
+                                            "Last Updated",
                                             style: TextStyle(
                                                 color: Colors.blue,
                                                 fontSize: 20,
@@ -188,7 +172,7 @@ class _SettingsState extends State<Settings> {
                                             CONFIG_FILE[0].isNotEmpty ? 16 : 0,
                                       ),
                                       Text(
-                                        "Saved Profile: ${settingData.batteryBrand}",
+                                        "Selected Profile: ${settingData.batteryBrand}",
                                         style: TextStyle(
                                             color: Colors.blue,
                                             fontSize: 20,
@@ -208,7 +192,7 @@ class _SettingsState extends State<Settings> {
                                           _selectedKey = value;
                                         },
                                         decoration:
-                                            _decoration('Select the brand'),
+                                            _decoration('Profile selection'),
                                         items: _keyOfFileData
                                             .map<DropdownMenuItem<String>>(
                                                 (String value) {

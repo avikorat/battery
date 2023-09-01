@@ -2,6 +2,8 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'package:battery/bloc/charastric/charasterics_bloc.dart';
+import 'package:battery/bloc/connection/connection_bloc.dart';
+import 'package:battery/bloc/connection/connection_event.dart';
 import 'package:battery/bloc/loading/loading_bloc.dart';
 import 'package:battery/bloc/loading/loading_event.dart';
 import 'package:battery/bloc/parse_data/parse_data_bloc.dart';
@@ -30,6 +32,8 @@ class MainScreen extends StatefulWidget {
 }
 
 bool sendDataExecuted = false;
+bool isShown = false;
+
 
 class _MainScreenState extends State<MainScreen> {
   List<String> _packates = [];
@@ -37,9 +41,11 @@ class _MainScreenState extends State<MainScreen> {
   List<String> _finalSortedData = [];
   List<double> _voltage = [];
   List<int> _current = [];
+  List<int> _capacity = [];
   String _parsedPackates = '';
   BluetoothService? _service;
   BluetoothCharacteristic? _characteristic;
+  FlutterBluePlus flutterBlue = FlutterBluePlus.instance;
 
   final List<String> _names = [
     "Battery Capacity",
@@ -61,7 +67,7 @@ class _MainScreenState extends State<MainScreen> {
   _convertDataToModelClass(List<String> data) {
     // String tempVolt = "0.00";
     final validCharacters = RegExp(r'^[a-zA-Z0-9]+$');
-
+    isShown = true;
     for (var dataElem in data) {
       dataElem = dataElem.replaceAll("\n", "");
       List<String> values = dataElem.split(":");
@@ -166,17 +172,23 @@ class _MainScreenState extends State<MainScreen> {
       } else if (values[1] == '21') {
         try {
           int _batteryCapacity = 0;
+
           if (values[2].contains("L")) {
-            String tempCapacity = values[2].replaceAll(RegExp(r'[L\n]'), '');
-            _batteryCapacity = int.parse(tempCapacity);
+            _batteryCapacity =
+                int.parse(values[2].replaceAll(RegExp(r'[L\n]'), ''));
           } else {
             _batteryCapacity = int.parse(values[2]);
           }
-          if (_batteryCapacity == 0) {
-            batteryCapacity = "0.00";
-          } else {
-            batteryCapacity = _batteryCapacity.toString();
+
+          _capacity.add(_batteryCapacity);
+
+          if (_capacity.length > 5) {
+            _capacity.removeAt(0);
           }
+
+          batteryCapacity = _capacity
+              .reduce((value, element) => value > element ? value : element)
+              .toString();
         } catch (e) {
           print(e);
         }
@@ -206,6 +218,21 @@ class _MainScreenState extends State<MainScreen> {
     final parsedLines = _parsedPackates.split('\n');
 
     for (String element in parsedLines) {
+      if (element.startsWith("I:")) {
+        if (element.contains("I:40")) {
+          element.split('\n').forEach((splittedElement) async {
+            if (splittedElement.contains("I:40")) {
+              if (CRC == '' ||
+                  int.parse(splittedElement.split(":")[2]) != int.parse(CRC)) {
+                if (sendDataExecuted == false) {
+                  sendDataExecuted = true;
+                  await sendDataToCharger(fileSelectedData, _characteristic!);
+                }
+              }
+            }
+          });
+        }
+      }
       if (element.startsWith('L:')) {
         _finalParsedData.add(element);
         _parsedPackates = "";
@@ -218,14 +245,6 @@ class _MainScreenState extends State<MainScreen> {
 
       if (_finalParsedData.isNotEmpty &&
           (_finalParsedData.last.contains('L:50'))) {
-        if (_finalParsedData.last.split(":").last.toString() != CRC &&
-            fileSelectedData != "") {
-          if (!sendDataExecuted) {
-            sendDataExecuted = true;
-
-            await sendDataToCharger(fileSelectedData, _characteristic!);
-          }
-        }
         List<String> temp = _finalParsedData;
         if (_finalParsedData.length > 5) {
           for (int i = 0; i < _finalParsedData.length; i++) {
@@ -242,6 +261,7 @@ class _MainScreenState extends State<MainScreen> {
       }
     }
   }
+
 
 // Fetching data from the bluetooth and passing to decode function
   _gettingData(List<BluetoothService> state) {
@@ -268,7 +288,11 @@ class _MainScreenState extends State<MainScreen> {
       }
 
       _characteristic!.value.listen((notificationData) {
-        _decodeData(notificationData);
+        if (notificationData.isEmpty) {
+          // context.read<ConnectionBloc>().add(ConnectedEvent(device));
+        } else {
+          _decodeData(notificationData);
+        }
       });
     }
   }
@@ -389,6 +413,12 @@ class _MainScreenState extends State<MainScreen> {
                         .writeToFile("_$finalFileData", BLUETOOTH_MAC);
 
                     BRANDNAME = content.split("=")[0];
+                    fileSelectedData = content.split("\n")[0];
+                    // CRC = fileSelectedData
+                    //     .split(';')
+                    //     .where((element) => element.startsWith('C:50:'))
+                    //     .first
+                    //     .split(":")[2];
                     sendDataExecuted = false;
                     // dynamic configBox = await Hive.openBox('configBox');
                     // await configBox.delete('configData');
@@ -397,7 +427,6 @@ class _MainScreenState extends State<MainScreen> {
                     //   DateTime.now().toString()
                     // ];
                     // await configBox.put("configData", CONFIG_FILE);
-                    
 
                     Navigator.of(context).pop();
                     context.read<LoadingBloc>().add(Loading(false));
@@ -534,7 +563,7 @@ class _MainScreenState extends State<MainScreen> {
           ],
         ),
         Text(
-          "Connected Bluetooth: 2406SRD${BLUETOOTH_MAC.substring(BLUETOOTH_MAC.length -5)}",
+          "Connected Bluetooth: 2406SRD ${BLUETOOTH_MAC.substring(BLUETOOTH_MAC.length - 5).replaceAll(":", "")}",
           style: TextStyle(
               color: Colors.blue, fontWeight: FontWeight.bold, fontSize: 20),
         )
@@ -548,14 +577,16 @@ class _MainScreenState extends State<MainScreen> {
     } else if (soc >= 25 && soc < 45) {
       return showNewStatusUI(Icons.battery_2_bar, Colors.yellow, 40);
     } else if (soc >= 45 && soc < 70) {
-      return showNewStatusUI(Icons.battery_4_bar, Colors.orange, 70);
-    } else if (soc >= 70 && soc <= 100) {
-      return showNewStatusUI(Icons.battery_6_bar, Colors.green, 100);
+      return showNewStatusUI(Icons.battery_4_bar, Colors.orange, 60);
+    } else if (soc >= 70 && soc <= 99) {
+      return showNewStatusUI(Icons.battery_6_bar, Colors.green, 90);
+    } else if (soc >= 99) {
+      return showNewStatusUI(Icons.battery_6_bar, Colors.green, 120);
     }
   }
 
   Widget showNewStatusUI(
-      IconData selectedIcon, Color selectedColor, double waveHeight) {
+      IconData selectedIcon, Color selectedColor, double soc) {
     int duration = 5000;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 2),
@@ -571,29 +602,18 @@ class _MainScreenState extends State<MainScreen> {
                   size: 200,
                   color: selectedColor,
                 ),
-                SizedBox(
+                Container(
                   width: 50,
-                  height: waveHeight,
-                  child: WaveWidget(
-                    config: CustomConfig(
-                      colors: [
-                        selectedColor,
-                      ],
-                      durations: [
-                        duration,
-                      ],
-                      heightPercentages: [-0.2],
-                    ),
-                    backgroundColor: Colors.transparent,
-                    size: const Size(double.infinity, double.infinity),
-                    waveAmplitude: 0,
-                  ),
+                  height: soc,
+                  color: selectedColor,
                 ),
               ],
             )),
       ),
     );
   }
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -607,9 +627,33 @@ class _MainScreenState extends State<MainScreen> {
               return BlocBuilder<LoadingBloc, bool>(
                 builder: (context, loadingState) {
                   if (loadingState) {
-                    return Center(
-                      child: CircularProgressIndicator(),
-                    );
+                    final currentContext = context;
+
+                    Timer(Duration(seconds: 60), () {
+                      if (!isShown) {
+                        isShown = true;
+                        showDialog(
+                          context: currentContext,
+                          builder: (BuildContext context) {
+                            isShown = true;
+                            return AlertDialog(
+                              title: const Text("Error"),
+                              content: Text(
+                                  "There might be some issue with charger can you restart charger?"),
+                              actions: [
+                                TextButton(
+                                  child: Text("Cancel"),
+                                  onPressed: () {
+                                    Navigator.of(context).pop();
+                                  },
+                                ),
+                              ],
+                            );
+                          },
+                        );
+                      }
+                    });
+                    return const Center(child: CircularProgressIndicator());
                   }
 
                   return SingleChildScrollView(
