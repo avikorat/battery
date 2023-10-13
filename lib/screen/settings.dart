@@ -98,13 +98,14 @@ class _SettingsState extends State<Settings> {
                       )
                     : BlocBuilder<SettingBloc, SettingData>(
                         builder: (context, settingData) {
-                          if (settingData.fileData.isEmpty) {
+                          if (settingData.fileData.split("\n").length < 2) {
                             _keyOfFileData = [];
                             _valuesOfFileData = [];
                             return Center(
                                 child:
                                     Text("There is no setting data available"));
-                          } else if (settingData.fileData.isNotEmpty) {
+                          } else if (settingData. fileData.split("\n").length >=
+                              2) {
                             if (fileDataaa != settingData.fileData) {
                               fileDataaa = "";
                               fileDataaa = settingData.fileData;
@@ -143,7 +144,6 @@ class _SettingsState extends State<Settings> {
                                         height:
                                             CONFIG_FILE[0].isNotEmpty ? 16 : 0,
                                       ),
-                                     
                                       Row(
                                         mainAxisAlignment:
                                             MainAxisAlignment.spaceBetween,

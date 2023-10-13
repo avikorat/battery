@@ -1,5 +1,3 @@
-import 'dart:ffi';
-
 import 'package:battery/bloc/setting/setting_bloc.dart';
 import 'package:battery/bloc/setting/setting_data.dart';
 import 'package:flutter/material.dart';
@@ -236,8 +234,14 @@ class _ConfigurationScsreenState extends State<ConfigurationScsreen> {
                           children: state.fileData.split('\n').map((element) {
                             final index =
                                 state.fileData.split('\n').indexOf(element);
+                            if (state.fileData.split('\n').last == element) {
+                              return SizedBox();
+                            }
                             return ListTile(
-                              title: Text(element.split('=')[0].split('-')[0]),
+                              title: Text(element
+                                  .split('=')[0]
+                                  .split('-')[0]
+                                  .replaceAll('_', '')),
                               leading: Checkbox(
                                 value: _selectedCheck[index],
                                 onChanged: (value) {
@@ -258,6 +262,7 @@ class _ConfigurationScsreenState extends State<ConfigurationScsreen> {
                                         borderRadius:
                                             BorderRadius.circular(8))),
                                 onPressed: () {
+                                  List<String> configurationData = [];
                                   List<String> _serviceData =
                                       state.fileData.split('\n');
 
@@ -267,13 +272,21 @@ class _ConfigurationScsreenState extends State<ConfigurationScsreen> {
                                       .where((entry) => entry.value == true)
                                       .map((entry) => entry.key)
                                       .toList();
+
                                   trueIndexes.forEach((element) {
-                                    _serviceData.removeAt(element);
+                                    configurationData
+                                        .add(_serviceData[element]);
                                   });
 
-                                  // context.read<SettingBloc>().add(
-                                  //     UploadSettingData(
-                                  //         _serviceData.join('\n')));
+                                  _serviceData.removeWhere((element) =>
+                                      configurationData.contains(element));
+
+                                  context.read<SettingBloc>().add(
+                                      UploadSettingData(
+                                          _serviceData
+                                              .join('\n')
+                                              .replaceAll("_", ""),
+                                          state.fileData.split('/').last));
 
                                   ScaffoldMessenger.of(context)
                                       .showSnackBar(SnackBar(

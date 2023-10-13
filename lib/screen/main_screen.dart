@@ -21,6 +21,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:wave/config.dart';
 import 'package:wave/wave.dart';
 
@@ -34,7 +35,6 @@ class MainScreen extends StatefulWidget {
 bool sendDataExecuted = false;
 bool isShown = false;
 
-
 class _MainScreenState extends State<MainScreen> {
   List<String> _packates = [];
   List<String> _finalParsedData = [];
@@ -45,7 +45,6 @@ class _MainScreenState extends State<MainScreen> {
   String _parsedPackates = '';
   BluetoothService? _service;
   BluetoothCharacteristic? _characteristic;
-  FlutterBluePlus flutterBlue = FlutterBluePlus.instance;
 
   final List<String> _names = [
     "Battery Capacity",
@@ -98,8 +97,8 @@ class _MainScreenState extends State<MainScreen> {
 
 // 2 for charge time
       } else if (values[1] == "3") {
-        int _chargeTimeFlag = 0;
-        values[2].replaceAll(RegExp(r'[^0-9]'), '');
+        int _chargeTimeFlag =
+            int.parse(values[2].replaceAll(RegExp(r'[^0-9]'), ''));
 
         int _hours = (_chargeTimeFlag / 60).toInt();
         int _mins = (_chargeTimeFlag % 60).toInt();
@@ -262,7 +261,6 @@ class _MainScreenState extends State<MainScreen> {
     }
   }
 
-
 // Fetching data from the bluetooth and passing to decode function
   _gettingData(List<BluetoothService> state) {
     if (state.isNotEmpty) {
@@ -373,8 +371,7 @@ class _MainScreenState extends State<MainScreen> {
           children: <Widget>[
             GestureDetector(
               onTap: () async {
-                FilePickerResult? result =
-                    await FilePicker.platform.pickFiles(type: FileType.any);
+                FilePickerResult? result = await FilePicker.platform.pickFiles(allowMultiple: false);
 
                 if (result != null && result.files.isNotEmpty) {
                   fileSelected = File(result.files.first.path!);
@@ -612,8 +609,6 @@ class _MainScreenState extends State<MainScreen> {
       ),
     );
   }
-
-
 
   @override
   Widget build(BuildContext context) {

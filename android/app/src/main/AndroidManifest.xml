@@ -1,6 +1,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.example.battery">
 
+  <uses-feature android:name="android.hardware.bluetooth_le" android:required="true" />
+  
    <application
         android:label="Soneil Charger"
         android:name="${applicationName}"

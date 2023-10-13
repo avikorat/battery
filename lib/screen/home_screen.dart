@@ -41,7 +41,6 @@ bool is_exist = false;
 class _HomeScreenState extends State<HomeScreen> {
   // final String deviceId = "20:10:4B:80:64:C5";
   final String deviceId = "20:10:4B";
-  FlutterBluePlus flutterBlue = FlutterBluePlus.instance;
   bool connected = false;
   bool scanStoped = false;
   List<BluetoothService> services = [];
@@ -173,14 +172,15 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void connectToDevice() async {
     try {
-      List<BluetoothDevice> devices = await flutterBlue.connectedDevices;
+      List<BluetoothDevice> devices =
+          await FlutterBluePlus.connectedSystemDevices;
       for (BluetoothDevice d in devices) {
-        if (d.id.toString().substring(0, 8) == deviceId &&
-            d.name.contains("JDY")) {
+        if (d.remoteId.toString().substring(0, 8) == deviceId &&
+            d.platformName.contains("JDY")) {
           device = d;
           connected = true;
-          BLUETOOTH_NAME = d.name;
-          BLUETOOTH_MAC = d.id.toString();
+          BLUETOOTH_NAME = d.platformName;
+          BLUETOOTH_MAC = d.remoteId.toString();
 
           _readData();
           discoverServices();
@@ -193,21 +193,34 @@ class _HomeScreenState extends State<HomeScreen> {
 
     if (!connected) {
       try {
-        await flutterBlue.stopScan();
+        await FlutterBluePlus.startScan();
+        FlutterBluePlus.scanResults.listen((event) async {
+          for (ScanResult r in event) {
+         
+            if(r.device.remoteId.toString().substring(0,8) == deviceId){
+               String scannedId = r.device.remoteId.toString();
 
-        flutterBlue
-            .scan(timeout: const Duration(seconds: 10))
-            .listen((event) async {
-          if (event.device.type == BluetoothDeviceType.le) {
-            print(event.device.id);
-            String scannedId = event.device.id.toString();
-
-            if (scannedId.substring(0, 8) == deviceId &&
-                event.device.name.contains("JDY")) {
-              device = event.device;
-              connectDevice();
+              if (scannedId.substring(0, 8) == deviceId &&
+                  r.device.platformName.contains("JDY")) {
+                    await FlutterBluePlus.stopScan();
+                device = r.device;
+                connectDevice();
+              }
             }
+            // if (r.device.platformName == "LE") {
+             
+            // }
           }
+          // if (event.device.type == BluetoothDeviceType.le) {
+          //   print(event.device.id);
+          //   String scannedId = event.device.id.toString();
+
+          //   if (scannedId.substring(0, 8) == deviceId &&
+          //       event.device.name.contains("JDY")) {
+          //     device = event.device;
+          //     connectDevice();
+          //   }
+          // }
         });
       } catch (error) {
         print(error);
@@ -220,10 +233,10 @@ class _HomeScreenState extends State<HomeScreen> {
   void connectDevice() async {
     try {
       var response = await device?.connect();
-      BLUETOOTH_NAME = device!.name;
-      flutterBlue.stopScan();
+      BLUETOOTH_NAME = device!.platformName;
+      FlutterBluePlus.stopScan();
       connected = true;
-      BLUETOOTH_MAC = device!.id.toString();
+      BLUETOOTH_MAC = device!.remoteId.toString();
       _readData();
       discoverServices();
       setState(() {});
@@ -299,7 +312,7 @@ class _HomeScreenState extends State<HomeScreen> {
           .split("=")[0]
           .substring(1)
           .trim();
-      BRANDNAME = brandName;
+      BRANDNAME = brandName.replaceAll("_", '');
       String brandValue = fileData
           .split('\n')
           .take(fileData.split('\n').length - 1)
@@ -368,15 +381,15 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<TabServiceBloc, dynamic>(builder: (context, state) {
-      return StreamBuilder<BluetoothState>(
-          stream: flutterBlue.state,
+      return StreamBuilder<BluetoothAdapterState>(
+          stream: FlutterBluePlus.adapterState,
           builder: (context, snapshot) {
-            if (snapshot.data == BluetoothState.off) {
+            if (snapshot.data == BluetoothAdapterState.off) {
               context.read<ServiceBloc>().add(UpdateServiceList([]));
               device?.disconnect();
               connected = false;
               return _bluetoothOffWidget();
-            } else if (snapshot.data == BluetoothState.on) {
+            } else if (snapshot.data == BluetoothAdapterState.on) {
               if (!scanStoped) requestPermissions();
               Timer.periodic(Duration(seconds: 20), (timer) {
                 if (!connected) {
@@ -388,19 +401,21 @@ class _HomeScreenState extends State<HomeScreen> {
                 }
               });
             }
-            return snapshot.data == BluetoothState.on
+            return snapshot.data == BluetoothAdapterState.on
                 ? scanStoped
-                    ? _scanOffWidget("Couldn't locate charger. Please scan for charger again.")
-                    : StreamBuilder<BluetoothDeviceState>(
-                        stream: device?.state,
+                    ? _scanOffWidget(
+                        "Couldn't locate charger. Please scan for charger again.")
+                    : StreamBuilder<BluetoothConnectionState>(
+                        stream: device?.connectionState,
                         builder: (context, snapShot) {
-                          if (snapShot.data == BluetoothDeviceState.connected) {
+                          if (snapShot.data ==
+                              BluetoothConnectionState.connected) {
                             return Scaffold(
                               body: _pageNo[state],
                               bottomNavigationBar: _bottomBar(state),
                             );
                           } else if (snapShot.data ==
-                              BluetoothDeviceState.disconnected) {
+                              BluetoothConnectionState.disconnected) {
                             return _scanOffWidget("Bluetooth is disconnected.");
                           } else {
                             return Scaffold(
