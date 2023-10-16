@@ -175,27 +175,26 @@ class _ConfigurationScsreenState extends State<ConfigurationScsreen> {
                       onPressed: () {
                         int current = 0;
                         int voltage = 0;
+                        int capacity = 0;
                         if (_formKey.currentState!.validate()) {
-                          if (double.parse(_currentController.text) % 1 != 0) {
-                            current =
-                                (double.parse(_currentController.text) * 100)
-                                    .toInt();
-                          } else {
-                            current = int.parse(_currentController.text);
-                          }
-                          if (double.parse(_voltageController.text) % 1 != 0) {
-                            voltage =
-                                (double.parse(_voltageController.text) * 100)
-                                    .toInt();
-                          } else {
-                            voltage = int.parse(_voltageController.text);
-                          }
+                          current =
+                              (double.parse(_currentController.text) * 100)
+                                  .toInt();
+
+                          voltage =
+                              (double.parse(_voltageController.text) * 100)
+                                  .toInt();
+
+                          capacity =
+                              (double.parse(_capacityController.text) * 10)
+                                  .toInt();
+
                           int chem = _dropdownOptions.indexOf(_selectedOption!);
-                          int capacityInt = int.parse(_capacityController.text);
-                          int total = current + voltage + capacityInt + chem;
+                          int total =
+                              current + voltage + capacity + chem + 2056;
 
                           String interpolationStr =
-                              "\n${_profileNameController.text} - $_selectedOption=C:0:$chem;C:1:0;C:2:$capacityInt;C:3:$voltage;C:4:$current;C:50:$total;C:55:0";
+                              "${_profileNameController.text} - $_selectedOption=C:0:$chem;C:2:$capacity;C:4:$current;C:3:$voltage;C:5:40;C:13:15;C:14:1800;C:9:0;C:10:0;C:7:0;C:8:200;C:6:1;C:50:$total;C:55:0;C:55:0";
                           context
                               .read<SettingBloc>()
                               .add(UpdateOneProfile(interpolationStr));

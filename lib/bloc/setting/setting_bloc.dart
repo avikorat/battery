@@ -27,11 +27,9 @@ class SettingBloc extends Bloc<SettingEvent, SettingData> {
         if (exist) {
           await file.delete();
         }
-        file.writeAsString(
-            "_${event.settingData}");
+        file.writeAsString("_${event.settingData}");
         emit(SettingData(
-            fileData:
-                "_${event.settingData}",
+            fileData: "_${event.settingData}",
             batteryBrand: '',
             batterySavedValue: ''));
       },
@@ -40,17 +38,24 @@ class SettingBloc extends Bloc<SettingEvent, SettingData> {
     on<UpdateOneProfile>(
       (event, emit) async {
         final directory = await getApplicationDocumentsDirectory();
-        final path = '${directory.path}/profile.txt';
+        final path = '${directory.path}/config_$BLUETOOTH_MAC.txt';
         final file = File(path);
         final exist = await file.exists();
         String data = "";
         if (exist) {
-          file.writeAsStringSync(event.settingData, mode: FileMode.append);
+          data = await file.readAsString();
+          List<String> dataList = data.split("\n");
+          dataList.insert(dataList.length - 1, event.settingData.trim());
+          String updatedList = dataList.join("\n");
+          file.writeAsStringSync(updatedList, mode: FileMode.write);
           data = await file.readAsString();
           print(data);
+        } else {
+          data ="_${event.settingData} \n   ";
+          file.writeAsString(data);
         }
         emit(SettingData(
-            fileData: data, batteryBrand: '', batterySavedValue: ''));
+            fileData: event.settingData, batteryBrand: '', batterySavedValue: ''));
       },
     );
   }
